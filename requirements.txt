@@ -1,0 +1,13 @@
+pytest==8.3.4
+pytest-playwright==0.6.2
+pytest-xdist==3.6.1
+pytest-xdist-worker-stats==0.3.0
+allure-pytest==2.13.5
+python-dotenv==1.0.1
+pydantic-settings==2.7.1
+httpx==0.28.1
+invoke==2.2.0
+playwright==1.49.1
+ruff==0.8.6
+black==24.10.0
+pre-commit==4.0.1
