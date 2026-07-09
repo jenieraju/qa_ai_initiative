@@ -85,15 +85,27 @@ class Settings(BaseSettings):
 
     credentials_encryption_key: str = Field(default="", alias="CREDENTIALS_ENCRYPTION_KEY")
 
-    # Optional FEATURE_* vars with fallback chain for shared org/user reuse.
-    feature_login_org_id: str = Field(default="", alias="FEATURE_LOGIN_ORG_ID")
-    feature_login_user_email: str = Field(default="", alias="FEATURE_LOGIN_USER_EMAIL")
-    feature_login_user_password: str = Field(default="", alias="FEATURE_LOGIN_USER_PASSWORD")
+    # Login is mobile number + OTP (src/features/authentication/pages/login).
+    # Optional FEATURE_* vars with fallback chain for shared mobile/OTP reuse.
+    feature_login_mobile_number: str = Field(default="", alias="FEATURE_LOGIN_MOBILE_NUMBER")
+    feature_login_otp: str = Field(default="", alias="FEATURE_LOGIN_OTP")
 
     # Fallback to a shared suite when feature-specific vars are absent.
-    shared_org_id: str = Field(default="", alias="SHARED_ORG_ID")
-    shared_user_email: str = Field(default="", alias="SHARED_USER_EMAIL")
-    shared_user_password: str = Field(default="", alias="SHARED_USER_PASSWORD")
+    shared_mobile_number: str = Field(default="", alias="SHARED_MOBILE_NUMBER")
+    shared_otp: str = Field(default="", alias="SHARED_OTP")
+
+    # Onboarding — organization path KYC/bank verification (see AUTH.DOCUMENT_UPLOAD,
+    # AUTH.SELECT_PAYMENT in the app repo's routes.tsx). No shared fallback: these are
+    # onboarding-specific test data, not reused by other features.
+    feature_onboarding_pan: str = Field(default="", alias="FEATURE_ONBOARDING_PAN")
+    feature_onboarding_gstin: str = Field(default="", alias="FEATURE_ONBOARDING_GSTIN")
+    feature_onboarding_document_path: str = Field(
+        default="", alias="FEATURE_ONBOARDING_DOCUMENT_PATH"
+    )
+    feature_onboarding_bank_account_number: str = Field(
+        default="", alias="FEATURE_ONBOARDING_BANK_ACCOUNT_NUMBER"
+    )
+    feature_onboarding_bank_ifsc: str = Field(default="", alias="FEATURE_ONBOARDING_BANK_IFSC")
 
     target_browser: str = Field(default="chromium", alias="TARGET_BROWSER")
     headless: bool = Field(default=True, alias="HEADLESS")
@@ -109,16 +121,12 @@ class Settings(BaseSettings):
         return str(value).strip().lower() in {"1", "true", "yes", "on"}
 
     @property
-    def login_org_id(self) -> str:
-        return self.feature_login_org_id or self.shared_org_id
+    def login_mobile_number(self) -> str:
+        return self.feature_login_mobile_number or self.shared_mobile_number
 
     @property
-    def login_user_email(self) -> str:
-        return self.feature_login_user_email or self.shared_user_email
-
-    @property
-    def login_user_password(self) -> str:
-        return self.feature_login_user_password or self.shared_user_password
+    def login_otp(self) -> str:
+        return self.feature_login_otp or self.shared_otp
 
 
 def _apply_url_map(settings: Settings, env_name: str) -> Settings:

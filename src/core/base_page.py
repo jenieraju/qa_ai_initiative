@@ -29,3 +29,6 @@ class BasePage:
 
     def get_by_data_test_id(self, test_id: str) -> Locator:
         return self.page.get_by_test_id(test_id)
+
+    def get_by_placeholder(self, text: str) -> Locator:
+        return self.page.get_by_placeholder(text)

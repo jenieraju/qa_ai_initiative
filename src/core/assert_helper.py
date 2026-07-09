@@ -1,5 +1,7 @@
 """Assertion utilities wrapped in Allure steps."""
 
+import re
+
 import allure
 from playwright.sync_api import Locator, expect
 
@@ -37,10 +39,14 @@ def assert_element_has_text(
 
 
 @allure.step("Assert URL contains: {expected_fragment}")
-def assert_url_contains(page, expected_fragment: str) -> None:
-    assert (
-        expected_fragment in page.url
-    ), f"URL expected to contain '{expected_fragment}', got '{page.url}'"
+def assert_url_contains(page, expected_fragment: str, *, timeout: int | None = None) -> None:
+    """Web-first: waits/retries for navigation instead of checking page.url once."""
+    expect(page).to_have_url(re.compile(re.escape(expected_fragment)), timeout=timeout)
+
+
+@allure.step("Assert page title: {expected_title}")
+def assert_page_title(page, expected_title: str, *, timeout: int | None = None) -> None:
+    expect(page).to_have_title(expected_title, timeout=timeout)
 
 
 @allure.step("Assert true: {label}")
