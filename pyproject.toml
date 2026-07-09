@@ -1,0 +1,40 @@
+[project]
+name = "qa-ai-initiative-ui-automation"
+version = "0.1.0"
+description = "Pytest + Playwright + Allure UI test automation framework"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "pytest==8.3.4",
+    "pytest-playwright==0.6.2",
+    "pytest-xdist==3.6.1",
+    "pytest-xdist-worker-stats==0.3.0",
+    "allure-pytest==2.13.5",
+    "python-dotenv==1.0.1",
+    "pydantic-settings==2.7.1",
+    "httpx==0.28.1",
+    "invoke==2.2.0",
+    "playwright==1.49.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff==0.8.6",
+    "black==24.10.0",
+    "pre-commit==4.0.1",
+]
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "UP", "B", "SIM"]
+ignore = ["E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["src", "tests", "dataprovider"]

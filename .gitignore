@@ -1,0 +1,34 @@
+# Environment and secrets
+.env
+.env.*
+!.env.*.example
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+.venv/
+venv/
+
+# Test artifacts
+target/
+.pytest_cache/
+.auth/
+playwright-report/
+test-results/
+*.png
+*.webm
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
