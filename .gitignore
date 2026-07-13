@@ -15,6 +15,7 @@ build/
 venv/
 
 # Test artifacts
+output/
 target/
 .pytest_cache/
 .auth/
