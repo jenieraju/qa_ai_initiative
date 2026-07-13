@@ -60,6 +60,7 @@ def pytest_configure(config) -> None:
         ("p1", "Priority 1 — high importance"),
         ("p2", "Priority 2 — lower priority"),
         ("login", "Login and authentication flows"),
+        ("onboarding", "New user onboarding flow"),
         ("ignore", "Excluded from default test runs"),
         ("auth_profile", "Load Playwright storage state from .auth/{name}.json"),
         ("xdist_group", "Group tests for pytest-xdist loadgroup distribution"),

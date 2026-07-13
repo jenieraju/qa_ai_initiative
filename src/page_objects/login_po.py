@@ -1,27 +1,31 @@
 """Login page object — locators only.
 
-TODO: Replace placeholder locators once the real login flow and selectors are provided.
+Login is a single route (AUTH.LOGIN, "/login") that renders two states in
+sequence: mobile-number entry (LoginInput) then OTP entry (OtpVerification).
+Locators for both states live here since they share one page/route.
 All page.locator() / page.get_by_*() calls must live in this file only.
 """
 
-from playwright.sync_api import Locator
-
+from src.constants.messages import MSG_INVALID_OTP
 from src.core.base_page import BasePage
 
 
 class LoginPage(BasePage):
-    """Page object for the application login screen."""
+    """Page object for the application login + OTP verification screen."""
 
     def __init__(self, page) -> None:
         super().__init__(page)
 
-        # --- Locators ---
-        # TODO: Update selectors after reviewing the real login page.
-        self.input_email = self.get_by_data_test_id("login-email")
-        self.input_password = self.get_by_data_test_id("login-password")
-        self.btn_login = self.get_by_data_test_id("login-submit")
-        self.msg_error = self.get_by_data_test_id("login-error")
-        self.lbl_page_title = self.get_by_text("Sign in", exact=True)
+        # --- Locators: shared AuthSection chrome ---
+        self.lbl_section_title = self.get_by_data_test_id("authentication_title")
+        self.lbl_section_description = self.get_by_data_test_id("authentication_description")
+        self.btn_continue = self.get_by_button("Continue")
+        self.msg_input_error = self.get_by_data_test_id("error_text")
 
-    def _loc_error_message(self, message: str) -> Locator:
-        return self.msg_error.filter(has_text=message)
+        # --- Locators: mobile-number entry state ---
+        self.input_mobile_number = self.get_by_placeholder("Enter your mobile number")
+        self.chk_agree_terms = self.get_by_data_test_id("login_agreeTerms")
+
+        # --- Locators: OTP entry state (6 single-digit boxes, shared test id) ---
+        self.input_otp_boxes = self.get_by_data_test_id("otpVerify_otpInputs")
+        self.msg_otp_invalid = self.get_by_text(MSG_INVALID_OTP)

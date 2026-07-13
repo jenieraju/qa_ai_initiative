@@ -14,8 +14,8 @@ class PageActions:
         self.settings = get_settings()
 
     @allure.step("Click element")
-    def click(self, locator: Locator, *, timeout: int | None = None) -> None:
-        locator.click(timeout=timeout or self.settings.default_timeout_ms)
+    def click(self, locator: Locator, *, timeout: int | None = None, force: bool = False) -> None:
+        locator.click(timeout=timeout or self.settings.default_timeout_ms, force=force)
 
     @allure.step("Fill input")
     def fill(self, locator: Locator, value: str, *, timeout: int | None = None) -> None:

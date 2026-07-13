@@ -2,5 +2,32 @@
 
 MSG_SESSION_EXPIRED = "Session expired"
 MSG_LOGOUT_SUCCESS = "You have been logged out"
-MSG_INVALID_CREDENTIALS = "Invalid credentials"
 MSG_LOGIN_SUCCESS = "Welcome"
+
+# Login (src/features/authentication/pages/login/Login.tsx in the app repo)
+MSG_INVALID_MOBILE_NUMBER = "Invalid mobile number"
+MSG_INVALID_OTP = "Oops! please enter a valid code"
+TITLE_LOGIN = "Login"
+TITLE_OTP_VERIFICATION = "Enter OTP"
+SECTION_TITLE_LOGIN = "Login"
+SECTION_TITLE_OTP_VERIFICATION = "Verification Code"
+
+# Onboarding — account selection (src/features/authentication/pages/account-selection)
+TITLE_REFERRAL_CODE = "Enter referral code"
+SECTION_TITLE_REFERRAL_CODE = "Enter your referral code below to redeem your rewards!"
+TITLE_SELECT_ACCOUNT = "Select Account"
+SECTION_TITLE_SELECT_ACCOUNT = "Help us get to know you"
+ACCOUNT_TYPE_INDIVIDUAL = "Individual"
+ACCOUNT_TYPE_ORGANIZATION = "Organization"
+
+# Onboarding — document upload / payment selection (organization path)
+TITLE_DOCUMENT_UPLOAD = "Document Upload"
+SECTION_TITLE_DOCUMENT_UPLOAD = "Upload Your Business Documents"
+TITLE_SELECT_PAYMENT = "Select Payment"
+SECTION_TITLE_SELECT_PAYMENT = "Let's add your bank account"
+
+# Shared button labels
+BTN_CONTINUE = "Continue"
+BTN_PROCEED = "Proceed"
+BTN_SKIP_REFERRAL = "Skip Referral"
+BTN_VERIFY_ACCOUNT = "Verify Account"

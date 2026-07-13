@@ -5,11 +5,10 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class UserCredentials:
-    """Represents a test user profile."""
+    """Represents a test user profile — login is mobile number + OTP."""
 
-    email: str
-    password: str
-    org_id: str = ""
+    mobile_number: str
+    otp: str
     display_name: str = ""
 
 
@@ -19,7 +18,6 @@ def get_default_login_user() -> UserCredentials:
 
     settings = get_settings()
     return UserCredentials(
-        email=settings.login_user_email,
-        password=settings.login_user_password,
-        org_id=settings.login_org_id,
+        mobile_number=settings.login_mobile_number,
+        otp=settings.login_otp,
     )
