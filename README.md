@@ -2,6 +2,8 @@
 
 Pytest + Playwright (sync API) + Allure UI test automation with a strict four-layer Page Object Model.
 
+See [APP_CONTEXT.md](APP_CONTEXT.md) for what the application under test (cofee-web) actually does — domain model, features, flows, and locator conventions — before writing new tests.
+
 ## Prerequisites
 
 - Python 3.11+
