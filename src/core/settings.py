@@ -25,9 +25,9 @@ ENV_NAME_ALIASES: dict[str, str] = {
 # Derive URLs from resolved env name — never hardcode hosts elsewhere.
 ENV_URL_MAP: dict[str, dict[str, str]] = {
     "dev": {
-        "base_url": "https://dev.example.com",
-        "api_base_url": "https://api-dev.example.com",
-        "admin_portal_url": "https://admin-dev.example.com",
+        "base_url": "https://web.dev.cofee.life",
+        "api_base_url": "https://api.dev.cofee.life",
+        "admin_portal_url": "",
     },
     "stg": {
         "base_url": "https://stg.example.com",

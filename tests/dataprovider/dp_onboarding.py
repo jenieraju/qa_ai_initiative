@@ -5,23 +5,24 @@ PAN/GSTIN, bank details, and document file paths are credential-like test
 data — those are read from settings inside the test, never here.
 """
 
+import uuid
+
 import pytest
 
 from src.page_objects.document_upload_po import CERTIFICATE_TYPE_PAN
 
 
-def get_individual_onboarding_test_data() -> list:
-    """Return parametrized individual-onboarding scenarios.
+def _random_label(prefix: str) -> str:
+    return f"{prefix} {uuid.uuid4().hex[:8]}"
 
-    Ignored until a mobile number + OTP pair accepted by the target
-    environment is configured (FEATURE_LOGIN_MOBILE_NUMBER / FEATURE_LOGIN_OTP).
-    """
+
+def get_individual_onboarding_test_data() -> list:
+    """Return parametrized individual-onboarding scenarios."""
     return [
         pytest.param(
-            "Automation Individual",
-            "Automation Individual Business",
+            _random_label("Auto User"),
+            _random_label("Auto Biz"),
             id="individual_onboarding",
-            marks=pytest.mark.ignore,
         ),
     ]
 
@@ -29,15 +30,15 @@ def get_individual_onboarding_test_data() -> list:
 def get_organization_onboarding_test_data() -> list:
     """Return parametrized organization-onboarding scenarios.
 
-    Ignored until login OTP plus real KYC/bank verification test data
+    Ignored until real KYC/bank verification test data
     (FEATURE_ONBOARDING_PAN, FEATURE_ONBOARDING_DOCUMENT_PATH,
     FEATURE_ONBOARDING_BANK_ACCOUNT_NUMBER, FEATURE_ONBOARDING_BANK_IFSC)
     are configured for an environment that accepts them.
     """
     return [
         pytest.param(
-            "Automation Org Owner",
-            "Automation Org Business",
+            _random_label("Auto Org Owner"),
+            _random_label("Auto Org Biz"),
             CERTIFICATE_TYPE_PAN,
             "incorporation_certificate",
             id="organization_onboarding_pan",

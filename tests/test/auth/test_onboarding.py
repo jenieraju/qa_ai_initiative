@@ -7,8 +7,8 @@ AUTH.SELECT_ACCOUNT instead of the dashboard). The organization flow
 additionally needs real KYC/bank verification test data
 (FEATURE_ONBOARDING_PAN, FEATURE_ONBOARDING_DOCUMENT_PATH,
 FEATURE_ONBOARDING_BANK_ACCOUNT_NUMBER, FEATURE_ONBOARDING_BANK_IFSC).
-Tests stay @pytest.mark.ignore (via dataprovider marks) until that data is
-configured for an environment that accepts it — remove the marker there once verified.
+Organization scenarios stay @pytest.mark.ignore (via dataprovider marks) until
+KYC/bank test data is configured — remove the marker there once verified.
 """
 
 import allure
