@@ -23,6 +23,7 @@ Optional Cursor Agent Skills for this repo. **Standards live in [AGENTS.md](../.
 | Create dataprovider | Implementation | `create-dataprovider/` |
 | Auth storage state setup | Implementation | `auth-storage-state-setup/` |
 | API test setup/teardown | Implementation | `api-test-setup-teardown/` |
+| Test data teardown | Implementation | `test-data-teardown/` |
 | Debug flaky E2E test | Maintenance | `debug-flaky-e2e-test/` |
 
 ## Planned (add when needed)

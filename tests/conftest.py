@@ -16,6 +16,7 @@ if str(TESTS_ROOT) not in sys.path:
 
 from src.core.session_state import session_state  # noqa: E402
 from src.core.settings import get_settings, resolve_env_name  # noqa: E402
+from src.core.teardown import teardown_registry  # noqa: E402
 
 # Track the most recently opened page/tab for failure screenshots.
 _active_pages: list[Page] = []
@@ -61,6 +62,7 @@ def pytest_configure(config) -> None:
         ("p2", "Priority 2 — lower priority"),
         ("login", "Login and authentication flows"),
         ("onboarding", "New user onboarding flow"),
+        ("unit", "Fast unit tests for core framework utilities (no browser)"),
         ("ignore", "Excluded from default test runs"),
         ("auth_profile", "Load Playwright storage state from .auth/{name}.json"),
         ("xdist_group", "Group tests for pytest-xdist loadgroup distribution"),
@@ -95,8 +97,19 @@ def _reset_session_state() -> None:
 
 
 @pytest.fixture(autouse=True)
-def _track_active_page(page: Page) -> None:
-    _register_active_page(page)
+def _run_data_teardown():
+    """Clean up any data a test registered with teardown_registry, pass or fail."""
+    teardown_registry.clear()
+    yield
+    teardown_registry.run_all()
+
+
+@pytest.fixture(autouse=True)
+def _track_active_page(request) -> None:
+    # @pytest.mark.unit tests are pure Python (e.g. core utility tests) and
+    # must not force a browser launch — skip requesting `page` for them.
+    if request.node.get_closest_marker("unit") is None:
+        _register_active_page(request.getfixturevalue("page"))
     yield
 
 
@@ -110,7 +123,10 @@ def _register_active_page(page: Page) -> None:
 
 
 @pytest.fixture(autouse=True)
-def _apply_timeouts(page: Page) -> None:
+def _apply_timeouts(request) -> None:
+    if request.node.get_closest_marker("unit") is not None:
+        return
+    page = request.getfixturevalue("page")
     settings = get_settings()
     page.set_default_timeout(settings.default_timeout_ms)
     page.set_default_navigation_timeout(settings.navigation_timeout_ms)

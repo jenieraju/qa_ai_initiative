@@ -82,6 +82,10 @@ Notes:
   forever. Every new onboarding test needs a mobile number with **zero
   existing organizations**; reusing one from a previous run will skip
   straight past `/select-account`.
+  - This is also why the onboarding tests register **no teardown**: there is
+    no delete API for the org/user this flow creates, so there's nothing a
+    `teardown_registry` cleanup could call (see AGENTS.md → "Teardown"). If
+    the app ever adds one, wire it in — don't leave this exception stale.
 
 ## Locator strategy notes (hard-won, don't rediscover these)
 
