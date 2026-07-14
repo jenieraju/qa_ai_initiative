@@ -1,6 +1,6 @@
 # AGENTS.md — UI Automation Framework Conventions
 
-This file documents enforced conventions for AI assistants and contributors working in this repository.
+This file documents enforced conventions for AI assistants and contributors working in this repository. For what the application under test (cofee-web) actually does, see [APP_CONTEXT.md](APP_CONTEXT.md) instead — this file covers the test framework only.
 
 ## Stack
 
