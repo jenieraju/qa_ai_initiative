@@ -1,6 +1,11 @@
 """Pytest configuration, fixtures, and hooks."""
 
+import contextlib
+import platform
 import sys
+import tomllib
+from datetime import datetime
+from importlib import metadata
 from pathlib import Path
 
 import allure
@@ -17,6 +22,10 @@ if str(TESTS_ROOT) not in sys.path:
 from src.core.session_state import session_state  # noqa: E402
 from src.core.settings import get_settings, resolve_env_name  # noqa: E402
 from src.core.teardown import teardown_registry  # noqa: E402
+
+OUTPUT_DIR = REPO_ROOT / "output"
+ALLURE_RESULTS_DIR = OUTPUT_DIR / "allure-results"
+LOGS_DIR = OUTPUT_DIR / "logs"
 
 # Track the most recently opened page/tab for failure screenshots.
 _active_pages: list[Page] = []
@@ -71,6 +80,47 @@ def pytest_configure(config) -> None:
         config.addinivalue_line("markers", f"{name}: {description}")
 
 
+def pytest_sessionstart(session) -> None:
+    """Bootstrap report output dirs and write Allure environment metadata.
+
+    Runs after pytest_configure (so --clean-alluredir has already cleaned
+    ALLURE_RESULTS_DIR) and once per process, including each xdist worker.
+    """
+    for directory in (OUTPUT_DIR, ALLURE_RESULTS_DIR, LOGS_DIR):
+        directory.mkdir(parents=True, exist_ok=True)
+    _write_allure_environment()
+
+
+def _write_allure_environment() -> None:
+    settings = get_settings()
+    framework_name, framework_version = _read_framework_version()
+    properties = {
+        "Environment": settings.app_env,
+        "Base.URL": settings.base_url,
+        "Browser": settings.target_browser,
+        "Headless": settings.headless,
+        "OS": platform.platform(),
+        "Python.Version": platform.python_version(),
+        "Playwright.Version": metadata.version("playwright"),
+        "Pytest.Version": metadata.version("pytest"),
+        "Framework": f"{framework_name} {framework_version}",
+        "Execution.Timestamp": datetime.now().isoformat(timespec="seconds"),
+    }
+    lines = [f"{key}={value}" for key, value in properties.items()]
+    (ALLURE_RESULTS_DIR / "environment.properties").write_text(
+        "\n".join(lines) + "\n", encoding="utf-8"
+    )
+
+
+def _read_framework_version() -> tuple[str, str]:
+    try:
+        with (REPO_ROOT / "pyproject.toml").open("rb") as pyproject_file:
+            project = tomllib.load(pyproject_file)["project"]
+        return project["name"], project["version"]
+    except Exception:
+        return "unknown", "0.0.0"
+
+
 @pytest.fixture(scope="session", autouse=True)
 def _configure_settings(pytestconfig) -> None:
     env_override = pytestconfig.getoption("--env")
@@ -115,6 +165,8 @@ def _track_active_page(request) -> None:
 
 def _register_active_page(page: Page) -> None:
     _active_pages.append(page)
+    page._console_logs = []  # attached here for failure-artifact capture below
+    page.on("console", lambda msg: page._console_logs.append(f"[{msg.type}] {msg.text}"))
 
     def on_popup(popup: Page) -> None:
         _register_active_page(popup)
@@ -183,6 +235,21 @@ def pytest_runtest_makereport(item, call):
         )
     except Exception:
         pass
+
+    with contextlib.suppress(Exception):
+        allure.attach(
+            page.content(),
+            name="page-source",
+            attachment_type=allure.attachment_type.HTML,
+        )
+
+    console_logs = getattr(page, "_console_logs", [])
+    if console_logs:
+        allure.attach(
+            "\n".join(console_logs),
+            name="browser-console-logs",
+            attachment_type=allure.attachment_type.TEXT,
+        )
 
 
 def _get_most_recent_page() -> Page | None:

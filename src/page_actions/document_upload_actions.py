@@ -1,6 +1,5 @@
 """Document-upload page actions — business logic and interactions (organization path)."""
 
-import allure
 from playwright.sync_api import Page
 
 from src.constants.messages import SECTION_TITLE_DOCUMENT_UPLOAD, TITLE_DOCUMENT_UPLOAD
@@ -32,7 +31,6 @@ class DocumentUploadPageActions(PageActions):
     def enter_card_number(self, card_number: str) -> None:
         self.fill(self.po.input_card_number, card_number)
 
-    @allure.step("Upload certificate file for '{certificate_type}'")
     def upload_certificate_file(self, certificate_type: str, file_path: str) -> None:
         self.po._loc_certificate_file_input(certificate_type).set_input_files(file_path)
 
@@ -40,7 +38,6 @@ class DocumentUploadPageActions(PageActions):
         self.click(self.po.btn_business_license_dropdown)
         self.click(self.po._loc_business_license_option(option_value))
 
-    @allure.step("Upload business license file")
     def upload_business_license_file(self, file_path: str) -> None:
         self.po._loc_business_license_file_input().set_input_files(file_path)
 

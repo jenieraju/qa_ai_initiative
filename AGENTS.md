@@ -80,6 +80,25 @@ Tests → Steps → Page Actions → Page Objects
 - `browser_context_args`: `@pytest.mark.auth_profile("name")` → `.auth/{name}.json`
 - Autouse timeout fixture for slow environments (skipped for `@pytest.mark.unit` tests — no `page`, no browser)
 - `pytest_runtest_makereport`: attach screenshot of most recent page/tab on failure
+- Autouse timeout fixture for slow environments
+- `pytest_sessionstart`: creates `output/` report dirs, writes `allure-results/environment.properties`
+- `pytest_runtest_makereport`: on failure, attaches screenshot, page HTML source, and browser console logs of the most recent page/tab
+
+## Reporting
+
+- All report output goes to `output/` (gitignored, auto-created) — Allure results, `report.html`, `junit-results.xml`, `logs/execution.log`. Fully configured in `pytest.ini`'s `addopts` — no CLI flags needed at call time.
+- `--clean-alluredir` wipes stale Allure results every run so old/new results never mix.
+- Decorator hierarchy — the only reporting convention that matters:
+
+  | Layer | Decorator | Notes |
+  |-------|-----------|-------|
+  | Test classes | `@allure.epic`, `@allure.suite`, `@allure.feature` | |
+  | Test methods | `@allure.story`, `@allure.severity` | dynamic title/description in body |
+  | Steps (`src/steps/`) | `@allure.step("User ...")` | one per logical user action |
+  | Page Actions, Page Objects | **none** | no `@allure.step` on locators, clicks/fills, or low-level utilities |
+
+  `src/core/assert_helper.py`'s assertion wrappers are the one deliberate exception — they carry `@allure.step` since the parameterized message (e.g. `Assert URL contains: /dashboard`) is what pinpoints a failure in the report tree.
+- See `README.md` → "Reporting" for run/view/clean commands and CI integration.
 
 ## Teardown — data created by a test must be cleaned up
 
