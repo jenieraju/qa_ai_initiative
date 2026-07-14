@@ -78,6 +78,8 @@ Tests → Steps → Page Actions → Page Objects
 - Registers all custom markers in `pytest_configure`
 - CLI: `--env`, `--target-browser`, `--headless`, `--record-video`
 - `browser_context_args`: `@pytest.mark.auth_profile("name")` → `.auth/{name}.json`
+- Autouse timeout fixture for slow environments (skipped for `@pytest.mark.unit` tests — no `page`, no browser)
+- `pytest_runtest_makereport`: attach screenshot of most recent page/tab on failure
 - Autouse timeout fixture for slow environments
 - `pytest_sessionstart`: creates `output/` report dirs, writes `allure-results/environment.properties`
 - `pytest_runtest_makereport`: on failure, attaches screenshot, page HTML source, and browser console logs of the most recent page/tab
@@ -97,6 +99,15 @@ Tests → Steps → Page Actions → Page Objects
 
   `src/core/assert_helper.py`'s assertion wrappers are the one deliberate exception — they carry `@allure.step` since the parameterized message (e.g. `Assert URL contains: /dashboard`) is what pinpoints a failure in the report tree.
 - See `README.md` → "Reporting" for run/view/clean commands and CI integration.
+
+## Teardown — data created by a test must be cleaned up
+
+- `src/core/teardown.py` exposes a module-level `teardown_registry` singleton (same pattern as `session_state`) — import it directly, no fixture threading needed.
+- The instant a step/action creates persistent data (API or UI), register its cleanup: `teardown_registry.register(lambda: api_client.delete(f"/v1/groups/{group_id}"), label=f"delete group {group_id}")`.
+- `tests/conftest.py`'s autouse `_run_data_teardown` fixture runs every registered cleanup after each test, **regardless of pass/fail**, most-recently-created first (LIFO). A failing cleanup is attached to Allure and does not block the rest from running.
+- See `.cursor/skills/test-data-teardown/SKILL.md` for the full pattern and a worked example.
+- **Known exception:** cofee-web's onboarding flow has no delete API for the org/user it creates (see [APP_CONTEXT.md](APP_CONTEXT.md)) — nothing to register there. Don't fabricate a fake cleanup call; document the gap instead, same as onboarding tests already do.
+- `@pytest.mark.unit` — fast, pure-Python tests for core framework utilities (e.g. the registry itself). No `page`, no browser; see `tests/test/core/`.
 
 ## Coding standards
 
