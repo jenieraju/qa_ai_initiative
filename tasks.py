@@ -6,7 +6,7 @@ from invoke import task
 @task
 def clean(c):
     """Remove build artifacts and cached results."""
-    c.run("rm -rf target/ .pytest_cache/ .ruff_cache/ playwright-report/ test-results/")
+    c.run("rm -rf output/ target/ .pytest_cache/ .ruff_cache/ playwright-report/ test-results/")
     c.run("find . -type d -name __pycache__ -exec rm -rf {} +", warn=True)
 
 
@@ -56,6 +56,10 @@ def test(c, env="dev", markers="not ignore", parallel=0, args=""):
 
 @task
 def report(c):
-    """Generate and open the Allure HTML report."""
-    c.run("allure generate target/allure-results -o target/allure-report --clean")
-    c.run("allure open target/allure-report")
+    """Generate and open the Allure HTML report (requires the Allure CLI).
+
+    For a quick one-off view without a persisted report directory, run
+    `allure serve output/allure-results` instead.
+    """
+    c.run("allure generate output/allure-results -o output/allure-report --clean")
+    c.run("allure open output/allure-report")

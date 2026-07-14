@@ -1,6 +1,9 @@
-"""Base page actions with shared interaction helpers."""
+"""Base page actions with shared interaction helpers.
 
-import allure
+Low-level primitives (click/fill/hover/waits) are intentionally undecorated —
+only the Steps layer (src/steps/) carries @allure.step, per AGENTS.md.
+"""
+
 from playwright.sync_api import Locator, Page
 
 from src.core.settings import get_settings
@@ -13,15 +16,12 @@ class PageActions:
         self.page = page
         self.settings = get_settings()
 
-    @allure.step("Click element")
     def click(self, locator: Locator, *, timeout: int | None = None, force: bool = False) -> None:
         locator.click(timeout=timeout or self.settings.default_timeout_ms, force=force)
 
-    @allure.step("Fill input")
     def fill(self, locator: Locator, value: str, *, timeout: int | None = None) -> None:
         locator.fill(value, timeout=timeout or self.settings.default_timeout_ms)
 
-    @allure.step("Hover element")
     def hover(self, locator: Locator, *, timeout: int | None = None) -> None:
         locator.hover(timeout=timeout or self.settings.default_timeout_ms)
 
