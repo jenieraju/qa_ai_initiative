@@ -33,5 +33,8 @@ Never skip layers.
 invoke install
 invoke lint
 invoke test --env dev
+invoke test-files --env dev --args="--headless false -vv"
+invoke onboarding --env dev --headless false
 invoke report
+invoke report-files
 ```

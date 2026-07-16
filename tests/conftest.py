@@ -8,7 +8,6 @@ from datetime import datetime
 from importlib import metadata
 from pathlib import Path
 
-import allure
 import pytest
 from playwright.sync_api import Page
 
@@ -19,6 +18,8 @@ TESTS_ROOT = REPO_ROOT / "tests"
 if str(TESTS_ROOT) not in sys.path:
     sys.path.insert(0, str(TESTS_ROOT))
 
+from src.core.failure_artifacts import capture_failure_artifacts  # noqa: E402
+from src.core.report_urls import print_report_urls  # noqa: E402
 from src.core.session_state import session_state  # noqa: E402
 from src.core.settings import get_settings, resolve_env_name  # noqa: E402
 from src.core.teardown import teardown_registry  # noqa: E402
@@ -26,6 +27,19 @@ from src.core.teardown import teardown_registry  # noqa: E402
 OUTPUT_DIR = REPO_ROOT / "output"
 ALLURE_RESULTS_DIR = OUTPUT_DIR / "allure-results"
 LOGS_DIR = OUTPUT_DIR / "logs"
+
+
+def _resolve_allure_results_dir(config) -> Path:
+    """Use pytest's --alluredir when set (per-file runs), else the default."""
+    for attr in ("allure_report_dir", "alluredir"):
+        value = getattr(config.option, attr, None)
+        if value:
+            return Path(value)
+    with contextlib.suppress(ValueError):
+        value = config.getoption("--alluredir")
+        if value:
+            return Path(value)
+    return ALLURE_RESULTS_DIR
 
 # Track the most recently opened page/tab for failure screenshots.
 _active_pages: list[Page] = []
@@ -53,6 +67,12 @@ def pytest_addoption(parser) -> None:
         default=None,
         help="Record video: true|false",
     )
+    parser.addoption(
+        "--open-allure",
+        action="store",
+        default="true",
+        help="Open Allure report in browser after the run: true|false (default true)",
+    )
 
 
 def pytest_configure(config) -> None:
@@ -71,6 +91,7 @@ def pytest_configure(config) -> None:
         ("p2", "Priority 2 — lower priority"),
         ("login", "Login and authentication flows"),
         ("onboarding", "New user onboarding flow"),
+        ("groups", "Group creation and management flows"),
         ("unit", "Fast unit tests for core framework utilities (no browser)"),
         ("ignore", "Excluded from default test runs"),
         ("auth_profile", "Load Playwright storage state from .auth/{name}.json"),
@@ -84,14 +105,15 @@ def pytest_sessionstart(session) -> None:
     """Bootstrap report output dirs and write Allure environment metadata.
 
     Runs after pytest_configure (so --clean-alluredir has already cleaned
-    ALLURE_RESULTS_DIR) and once per process, including each xdist worker.
+    the active allure results dir) and once per process, including each xdist worker.
     """
-    for directory in (OUTPUT_DIR, ALLURE_RESULTS_DIR, LOGS_DIR):
+    allure_dir = _resolve_allure_results_dir(session.config)
+    for directory in (OUTPUT_DIR, allure_dir, LOGS_DIR):
         directory.mkdir(parents=True, exist_ok=True)
-    _write_allure_environment()
+    _write_allure_environment(allure_dir)
 
 
-def _write_allure_environment() -> None:
+def _write_allure_environment(allure_dir: Path = ALLURE_RESULTS_DIR) -> None:
     settings = get_settings()
     framework_name, framework_version = _read_framework_version()
     properties = {
@@ -107,7 +129,7 @@ def _write_allure_environment() -> None:
         "Execution.Timestamp": datetime.now().isoformat(timespec="seconds"),
     }
     lines = [f"{key}={value}" for key, value in properties.items()]
-    (ALLURE_RESULTS_DIR / "environment.properties").write_text(
+    (allure_dir / "environment.properties").write_text(
         "\n".join(lines) + "\n", encoding="utf-8"
     )
 
@@ -219,6 +241,8 @@ def browser_context_args(browser_context_args, request, pytestconfig):
 def pytest_runtest_makereport(item, call):
     outcome = yield
     report = outcome.get_result()
+    setattr(item, f"rep_{report.when}", report)
+
     if report.when != "call" or report.passed:
         return
 
@@ -226,30 +250,16 @@ def pytest_runtest_makereport(item, call):
     if page is None:
         return
 
-    try:
-        screenshot = page.screenshot(full_page=True)
-        allure.attach(
-            screenshot,
-            name="failure-screenshot",
-            attachment_type=allure.attachment_type.PNG,
-        )
-    except Exception:
-        pass
+    error_message = str(report.longrepr) if report.longrepr else ""
+    allure_dir = _resolve_allure_results_dir(item.config)
+    output_dir = allure_dir.parent
 
-    with contextlib.suppress(Exception):
-        allure.attach(
-            page.content(),
-            name="page-source",
-            attachment_type=allure.attachment_type.HTML,
-        )
-
-    console_logs = getattr(page, "_console_logs", [])
-    if console_logs:
-        allure.attach(
-            "\n".join(console_logs),
-            name="browser-console-logs",
-            attachment_type=allure.attachment_type.TEXT,
-        )
+    report.extra = getattr(report, "extra", []) + capture_failure_artifacts(
+        page,
+        output_dir=output_dir,
+        nodeid=item.nodeid,
+        error_message=error_message,
+    )
 
 
 def _get_most_recent_page() -> Page | None:
@@ -260,3 +270,39 @@ def _get_most_recent_page() -> Page | None:
         except Exception:
             continue
     return None
+
+
+def pytest_sessionfinish(session, exitstatus) -> None:
+    """Generate Allure HTML, print report URLs, and optionally open Allure in the browser."""
+    # xdist workers finish separately; only the controller/main process should open the report.
+    if hasattr(session.config, "workerinput"):
+        return
+
+    config = session.config
+    allure_dir = _resolve_allure_results_dir(config)
+
+    html_report = getattr(config.option, "htmlpath", None)
+    junit_report = getattr(config.option, "xmlpath", None)
+    log_file = getattr(config.option, "log_file", None) or config.getini("log_file")
+
+    allure_report = allure_dir.parent / "allure-report"
+    if allure_report.name != "allure-report":
+        allure_report = OUTPUT_DIR / "allure-report"
+
+    from src.core.report_urls import generate_allure_report, open_allure_report  # noqa: E402
+
+    generated = generate_allure_report(allure_dir, allure_report)
+
+    print_report_urls(
+        html_report=Path(html_report) if html_report else OUTPUT_DIR / "report.html",
+        junit_report=Path(junit_report) if junit_report else OUTPUT_DIR / "junit-results.xml",
+        allure_results=allure_dir,
+        allure_report=allure_report if (allure_report / "index.html").exists() else None,
+        execution_log=Path(log_file) if log_file else LOGS_DIR / "execution.log",
+        title="Test reports",
+    )
+
+    open_flag = str(config.getoption("--open-allure")).strip().lower()
+    should_open = open_flag in {"1", "true", "yes", "on"}
+    if should_open and generated:
+        open_allure_report(allure_report)

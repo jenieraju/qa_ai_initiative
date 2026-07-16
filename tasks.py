@@ -1,5 +1,7 @@
 """Invoke task runner for the UI automation framework."""
 
+from pathlib import Path
+
 from invoke import task
 
 
@@ -54,6 +56,30 @@ def test(c, env="dev", markers="not ignore", parallel=0, args=""):
     c.run(cmd)
 
 
+@task(
+    help={
+        "env": "Target environment (dev|stg|uat|prod)",
+        "markers": "Pytest marker expression",
+        "args": "Additional pytest arguments (e.g. --headless false -vv)",
+    }
+)
+def test_files(c, env="dev", markers="not ignore", args=""):
+    """Run each test file separately; generate a report set per file under output/reports/."""
+    cmd = f'python -m src.core.per_file_report_runner --env {env} --markers "{markers}"'
+    if args:
+        cmd += f" -- {args}"
+    c.run(cmd)
+
+
+@task
+def report_files(c):
+    """Open the per-file report index (output/reports/index.html)."""
+    index = Path("output/reports/index.html")
+    if not index.exists():
+        raise SystemExit("No per-file reports found. Run `invoke test-files` first.")
+    c.run(f"xdg-open {index}", warn=True)
+
+
 @task
 def report(c):
     """Generate and open the Allure HTML report (requires the Allure CLI).
@@ -63,3 +89,22 @@ def report(c):
     """
     c.run("allure generate output/allure-results -o output/allure-report --clean")
     c.run("allure open output/allure-report")
+
+
+@task(
+    help={
+        "env": "Target environment (dev|stg|uat|prod)",
+        "headless": "Run browser headless: true|false",
+        "open_report": "Open Allure in browser after run: true|false",
+    }
+)
+def onboarding(c, env="dev", headless="false", open_report="true"):
+    """Run individual onboarding E2E and generate a readable Allure report."""
+    cmd = (
+        f'python3.11 -m pytest --env {env} --headless {headless} '
+        f'-m "onboarding and not ignore" tests/test/auth/test_onboarding.py -vv'
+    )
+    c.run(cmd)
+    c.run("allure generate output/allure-results -o output/allure-report --clean")
+    if str(open_report).strip().lower() in {"1", "true", "yes", "on"}:
+        c.run("allure open output/allure-report")

@@ -1,8 +1,9 @@
 """Onboarding test data provider.
 
-Business/profile/org names are not secrets and are embedded directly.
-PAN/GSTIN, bank details, and document file paths are credential-like test
-data — those are read from settings inside the test, never here.
+Profile/business/org names are not secrets. Mobiles are generated per test
+(see test_onboarding._fresh_mobile_number) so a shared FEATURE_LOGIN_* number
+is not burned across scenarios. PAN/GSTIN, bank details, and document paths
+are read from settings inside the test, never here.
 """
 
 import uuid

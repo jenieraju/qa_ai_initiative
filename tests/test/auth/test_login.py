@@ -1,20 +1,24 @@
 """End-to-end login tests.
 
-NOTE: Tests are marked @pytest.mark.ignore until a mobile number + OTP pair
-accepted by the target environment is configured (FEATURE_LOGIN_MOBILE_NUMBER /
-FEATURE_LOGIN_OTP — e.g. a fixed sandbox OTP). Remove the ignore marker once verified.
+Valid login uses FEATURE_LOGIN_MOBILE_NUMBER / FEATURE_LOGIN_OTP from settings.
+An existing onboarded user lands on /groups (confirmed on web.dev.cofee.life).
+After a successful valid login, the Playwright storage state is saved to
+.auth/default.json so later tests (e.g. group creation) can reuse the session.
+Invalid-mobile scenarios stay @pytest.mark.ignore until the live error copy is verified.
 """
 
 import allure
 import pytest
 
 from dataprovider.dp_login import get_login_test_data
-from src.constants.routes import DASHBOARD_PATH
+from src.constants.routes import GROUPS_PATH
 from src.core.assert_helper import assert_url_contains
+from src.core.auth_storage import DEFAULT_AUTH_PROFILE
 from src.core.settings import get_settings
 from src.steps.login_steps import (
     user_logs_in_with_mobile_and_otp,
     user_navigates_to_login_page,
+    user_saves_authenticated_session,
     user_submits_mobile_number,
     user_verifies_invalid_mobile_number_error,
     user_verifies_login_page_is_displayed,
@@ -51,7 +55,9 @@ class TestLogin:
                 settings.login_mobile_number,
                 settings.login_otp,
             )
-            assert_url_contains(page, DASHBOARD_PATH)
+            # Existing user with an org lands on /groups (not /dashboard).
+            assert_url_contains(page, GROUPS_PATH)
+            user_saves_authenticated_session(page, DEFAULT_AUTH_PROFILE)
             allure.attach(
                 page.url, name="post-login-url", attachment_type=allure.attachment_type.TEXT
             )

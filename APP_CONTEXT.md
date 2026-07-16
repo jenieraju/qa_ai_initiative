@@ -60,15 +60,15 @@ document_upload,payment_selection}_po.py` and
 `tests/test/auth/{test_login,test_onboarding}.py`.
 
 ```
-/login (mobile number + OTP)
+/login (mobile number + terms → OTP on same route)
   → new user, 0 orgs → /select-account
       → name + Individual/Organization choice
-          Individual → business name → Continue → onboards directly → /dashboard
+          Individual → business name → Continue → onboards directly → /groups
           Organization → business name → Continue → /document-upload
               → PAN/GSTIN + certificate file + business-license file → Continue
               → /select-payment → bank account + IFSC verification → Proceed
-              → /dashboard
-  → existing user, 1 org → /dashboard (or /lead-management/dashboard for lead roles)
+              → /groups
+  → existing user, 1 org → /groups (or /dashboard / lead-management for some roles)
   → existing user, >1 org → /organization-selection
 ```
 
