@@ -42,3 +42,14 @@ PAYMENT_COLLECTION_MONTHLY = "Monthly"
 BTN_SAVE_AND_NEXT = "Save and next"
 BTN_NEW_GROUP = "New Group"
 MSG_GROUP_CREATED = "Group created successfully"
+
+# Members — TODO: all values below are placeholders, not confirmed against
+# the live app or its source. Confirm with the app team / discover-locators-
+# from-ui before removing @pytest.mark.ignore from test_member_create.py.
+TITLE_MEMBERS = "Members"
+BTN_ADD_MEMBER = "Add Member"
+HEADING_ADD_MEMBER = "Add member"
+PLACEHOLDER_MEMBER_NAME = "Eg: Jane Doe"
+PLACEHOLDER_MEMBER_MOBILE_NUMBER = "Enter mobile number"
+BTN_SAVE_MEMBER = "Save"
+MSG_MEMBER_CREATED = "Member added successfully"
