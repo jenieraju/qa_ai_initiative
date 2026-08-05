@@ -92,6 +92,7 @@ def pytest_configure(config) -> None:
         ("login", "Login and authentication flows"),
         ("onboarding", "New user onboarding flow"),
         ("groups", "Group creation and management flows"),
+        ("members", "Member creation and management flows"),
         ("unit", "Fast unit tests for core framework utilities (no browser)"),
         ("ignore", "Excluded from default test runs"),
         ("auth_profile", "Load Playwright storage state from .auth/{name}.json"),
