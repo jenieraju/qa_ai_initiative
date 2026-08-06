@@ -15,6 +15,11 @@ don't scaffold files for an undocumented feature. See that file's
 "Writing new tests" for what belongs in it. This applies even if you
 skipped `generate-test-cases` and came here straight from a PRD.
 
+**Required last step, after the checklist:** if the scaffolded test ships
+`@pytest.mark.ignore`d (placeholder locators, as in the "Verify" step
+below not being fully green yet), add it to `README.md` → "Next steps" —
+same turn, not a follow-up.
+
 ## Inputs needed
 
 - Feature name (e.g. `login`, `checkout`)

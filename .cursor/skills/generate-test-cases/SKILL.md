@@ -34,6 +34,10 @@ This is what keeps `APP_CONTEXT.md` a live reference instead of drifting
 behind automation — it only works if it happens automatically, every time,
 not as an occasional manual cleanup.
 
+If any resulting test case is non-automatable or will ship
+`@pytest.mark.ignore`d (missing test data, unconfirmed locators, etc.),
+add it to `README.md` → "Next steps" too, same turn — same rule.
+
 ## Output format
 
 For each test case:

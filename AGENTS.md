@@ -20,7 +20,7 @@ Never skip layers.
 
 ## Always-on rules
 
-- New feature from a PRD? Confirm/add its context in `APP_CONTEXT.md` first (see that file's "Writing new tests") — don't let it drift behind automation.
+- New feature from a PRD? Confirm/add its context in `APP_CONTEXT.md` first (see that file's "Writing new tests") — don't let it drift behind automation. If it ships `@pytest.mark.ignore`d, also add it to `README.md` → "Next steps" the same turn.
 - Use `get_settings()` for config — never hardcode URLs, secrets, or credentials.
 - Parametrize from `tests/dataprovider/dp_*.py`.
 - On create of persistent data, register cleanup with `teardown_registry` (see `test-data-teardown` skill).
