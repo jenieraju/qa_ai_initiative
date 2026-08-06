@@ -83,7 +83,8 @@ pytest --env dev -n 2 --dist loadgroup
 
 - `@pytest.mark.e2e` — required on all UI tests
 - `@pytest.mark.p0|p1|p2` — priority
-- `@pytest.mark.<feature>` — feature grouping (e.g. `login`)
+- `@pytest.mark.<feature>` — feature grouping (e.g. `login`, `groups`, `members`)
+- `@pytest.mark.unit` — fast, pure-Python framework tests; no `page`, no browser
 - `@pytest.mark.ignore` — excluded from default runs
 - `@pytest.mark.auth_profile("name")` — loads `.auth/{name}.json` storage state
 - `pytestmark = pytest.mark.xdist_group(...)` — parallel group for shared mutable state
@@ -122,6 +123,8 @@ output/
 ```bash
 invoke test --env dev              # clean, lint, run — reports land in output/
 pytest --env dev -m "e2e and not ignore"   # same reporting, no invoke
+invoke test-files --env dev --args="--headless false -vv"   # one report set per test file, under output/reports/
+invoke onboarding --env dev --headless false                # onboarding suite only, opens Allure after
 ```
 
 ### Viewing reports
@@ -208,15 +211,20 @@ Save authenticated sessions to `.auth/{profile}.json`. Tests marked `@pytest.mar
 ## Tooling
 
 ```bash
-invoke lint        # ruff --fix + black
-invoke precommit   # run all pre-commit hooks
-invoke clean       # remove artifacts
-invoke report      # generate Allure HTML report
+invoke lint          # ruff --fix + black
+invoke precommit     # run all pre-commit hooks
+invoke clean         # remove artifacts
+invoke report        # generate Allure HTML report
+invoke report-files  # open the per-file report index (output/reports/index.html)
 ```
 
 ## Next steps
 
-The Login reference implementation uses **placeholder selectors** (`data-testid` stubs). Provide the real app name, environment URLs, and login flow details to finalize locators and enable the example tests (remove `@pytest.mark.ignore`).
+Login, individual onboarding, and basic group creation are real, working automation against `web.dev.cofee.life` — not placeholders.
+
+**Members is the current placeholder-selector example**: a full four-layer scaffold exists (`src/page_objects/{members,member_create}_po.py`, `tests/test/members/test_member_create.py`), but every locator, the route, and the required field set are unconfirmed guesses. It stays `@pytest.mark.ignore` until someone runs the `discover-locators-from-ui` skill against the live Members tab and confirms them — see `APP_CONTEXT.md` → "Members".
+
+Organization onboarding is written but also `@pytest.mark.ignore`d, pending real KYC/bank test-data env vars (`FEATURE_ONBOARDING_PAN`, etc. — see `.env.dev.example`).
 
 See `AGENTS.md` for full coding conventions.
 
