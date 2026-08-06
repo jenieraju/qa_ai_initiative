@@ -215,3 +215,9 @@ checklist. Before automating a new cofee-web screen or feature:
    would have saved you time — same as always. This is how "Groups" above
    got backfilled after the fact; the goal going forward is to not need
    that backfill.
+7. **If the new feature's test stays `@pytest.mark.ignore`d** (placeholder
+   locators, missing test data, whatever the reason), add it to
+   `README.md` → "Next steps" in the same turn — same "required, not
+   optional" rule as this file. That section's whole job is "what's still
+   rough"; it goes stale the exact same way this file already did once
+   (see "Groups" above) if nobody's job is to keep it current.
