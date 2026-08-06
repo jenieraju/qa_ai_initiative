@@ -28,6 +28,29 @@ Tailwind.
 - Organizations manage team members via roles (Branch Admin, Group Admin,
   etc.).
 
+## Cross-feature relationships (check this before writing tests for any mutation)
+
+The "Domain model" above states these links in prose; this table makes
+them checkable. Read it before writing test cases for anything that
+**creates, edits, or deletes** a shared entity — a change in one feature
+can silently break another if the dependency isn't accounted for in the
+test cases.
+
+| Entity | Depended on by | What to verify when it's created/edited/deleted |
+|---|---|---|
+| **Branch** | Groups, Members | No delete-branch flow documented yet — n/a until one exists |
+| **Group** | Payment links (interval/amount config lives on the group); Members (roster) | Deleting/editing a group with an active payment cycle or non-empty roster — **unconfirmed, no delete-group API exists yet** (see "Groups" below) |
+| **Member** | Group rosters; Payment links (recipients); Attendance records; Team role assignment (Branch Admin / Group Admin) | Deleting/editing a member — does it cascade, block if dependents exist, or orphan the related group/payment/attendance/role record? **Unconfirmed — no deletion feature exists yet; see "Members" below** |
+| **Team role** (Branch Admin / Group Admin) | Assigned to a Member | If the member holding a role is deleted or demoted — does the role vanish, block the action, or reassign? Unconfirmed |
+| **Payment link** | Group members (recipients) | Member/group deletion while a cycle is active or pending — unconfirmed |
+
+**Rule:** when a new feature's PRD touches an entity in the left column,
+add/update its row here in the same pass as adding the feature's own
+section below — and make sure the resulting test cases include the
+cascade/block/orphan behavior explicitly (not just the happy-path create
+flow). If the behavior isn't confirmed, say so in both this table and the
+feature's own section — don't leave it undocumented, and don't guess.
+
 ## Features
 
 | Feature | What it does |
@@ -87,6 +110,50 @@ Notes:
     `teardown_registry` cleanup could call (see AGENTS.md → "Teardown"). If
     the app ever adds one, wire it in — don't leave this exception stale.
 
+## Groups
+
+Already automated in this repo — see `src/page_objects/{groups,group_create}_po.py`
+and `tests/test/groups/test_group_create.py`.
+
+```
+Authenticated session → /groups → New Group → /groups/create
+    → name + payment-collection interval (monthly/weekly/by-terms) + amount
+    → Save and next → "Group created successfully" → group appears on /groups
+```
+
+Notes:
+- Session reuse: tests prefer cookies from `.auth/{profile}.json` (saved by
+  a prior login test) via `@pytest.mark.auth_profile`; fall back to a real
+  UI login via `user_ensures_logged_in()` if that file is missing/expired.
+- No teardown yet: confirm a delete-group API with the app team before
+  wiring `teardown_registry` (see `AGENTS.md` → "Teardown").
+- Only the create wizard's "basic details" step (name, interval, amount)
+  is automated so far — editing, member assignment, and any further
+  wizard steps are not yet covered.
+
+## Members
+
+Not yet confirmed against the live app. A creation-flow scaffold exists
+(`src/page_objects/{members,member_create}_po.py`,
+`tests/test/members/test_member_create.py`) but every locator, the route,
+and the required field set are placeholders — the test stays
+`@pytest.mark.ignore` until someone runs `discover-locators-from-ui`
+against the real Members tab and this section gets filled in with
+confirmed facts (route, real flow, fields, any role/permission rules).
+
+**If/when a member-deletion (or edit) feature lands**, per the
+"Cross-feature relationships" table above, its test cases must explicitly
+cover — not just assume — what happens to:
+- the member's **group roster** membership(s)
+- any **payment link** cycle they're currently a recipient on
+- their **attendance** history, if attendance tracking is live by then
+- any **team role** (Branch Admin / Group Admin) they hold
+
+None of these cascade behaviors are confirmed yet — that's the point of
+listing them here now, before the feature exists, so whoever picks up
+that PRD checks with the app team instead of assuming "delete just
+deletes."
+
 ## Locator strategy notes (hard-won, don't rediscover these)
 
 The app has **sparse `data-testid` coverage** — most values are defined
@@ -110,8 +177,41 @@ selector — the pattern is usually one of the above.
 ## Writing new tests
 
 Follow `AGENTS.md`'s four-layer architecture and "Adding a new feature"
-checklist. Before automating a new cofee-web screen:
-1. Read the real component source for that screen/feature in the app repo
+checklist. Before automating a new cofee-web screen or feature:
+
+1. **Check this file first.** If the feature already has a section above
+   (or a row in "Features"), read it before doing anything else instead of
+   re-deriving what's already documented.
+2. **If it's not here yet, add it in the same turn — this is required, not
+   optional.** Whenever a PRD/requirement names a feature this file doesn't
+   cover — whether the ask is to generate test cases
+   (`.cursor/skills/generate-test-cases`), scaffold automation
+   (`.cursor/skills/scaffold-feature-automation`), or both — add a section
+   for it here *before or alongside* that work, unprompted. Don't wait to
+   be asked to "update the app context"; treat a new-feature PRD as
+   carrying that instruction implicitly, every time. Content: what it
+   does, the real flow/routes, any field or locator quirks — sourced from
+   the PRD and the app's real source, never invented. If a fact genuinely
+   isn't confirmed yet (e.g. real locators before
+   `discover-locators-from-ui` has run against the live app), say so
+   explicitly, the way "Members" below does — a documented unknown is
+   fine, a silent guess stated as fact is not.
+   - Keep it as a single section in *this* file — no separate per-feature
+     context files. A git diff on this file already gives full visibility
+     into exactly what context was added and when; splitting it out would
+     just add a sync step with nothing to show for it.
+3. **Check "Cross-feature relationships" above.** If the feature creates,
+   edits, or deletes an entity that table lists (member, group, branch,
+   payment link, team role), add/update its row, and make sure the test
+   cases this turn cover the cascade/block/orphan behavior explicitly —
+   not just the new feature's own happy path. This is exactly how a bug
+   like "deleting a member silently orphans their group's payment link"
+   gets caught in test design instead of in production.
+4. Read the real component source for that screen/feature in the app repo
    — never guess selectors.
-2. Check the table above for the shared-component locator pattern first.
-3. Update this file if you learn something that would have saved you time.
+5. Check the "Locator strategy notes" table above for the shared-component
+   locator pattern first.
+6. Keep updating this file as you learn things mid-implementation that
+   would have saved you time — same as always. This is how "Groups" above
+   got backfilled after the fact; the goal going forward is to not need
+   that backfill.

@@ -10,3 +10,13 @@ repos:
     rev: 24.10.0
     hooks:
       - id: black
+
+  - repo: local
+    hooks:
+      - id: app-context-sync
+        name: APP_CONTEXT.md sync check
+        description: Fails if a pytest.ini feature marker has no matching APP_CONTEXT.md section.
+        entry: python -m pytest -m unit -q
+        language: system
+        pass_filenames: false
+        always_run: true

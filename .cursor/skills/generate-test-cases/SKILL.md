@@ -17,6 +17,23 @@ Produces **test case documents** first — automation comes later via `map-test-
 - User roles / personas (if RBAC)
 - Environments (dev, staging, etc.)
 
+## Step 0 — required, not optional: sync APP_CONTEXT.md
+
+Before producing any test case, check whether the feature already has a
+section in [APP_CONTEXT.md](../../../APP_CONTEXT.md).
+
+- **Missing or incomplete?** Add/extend its section in the same turn you
+  generate test cases — don't ask the user whether to do this, don't defer
+  it to a follow-up, don't just note the gap. Domain facts come from the
+  PRD/spec and the app's real source only; anything not confirmed yet gets
+  flagged explicitly in the file (see "Members" there for the pattern),
+  never stated as settled fact.
+- **Already documented?** Read it, don't re-derive it.
+
+This is what keeps `APP_CONTEXT.md` a live reference instead of drifting
+behind automation — it only works if it happens automatically, every time,
+not as an occasional manual cleanup.
+
 ## Output format
 
 For each test case:
@@ -49,6 +66,12 @@ Generate cases across these categories:
 - [ ] Navigation — deep links, back button, refresh
 - [ ] Error handling — API failure, timeout, toast/message text
 - [ ] Empty state — no data yet, first-time user
+- [ ] Cross-feature impact — if this feature creates/edits/deletes an
+      entity in APP_CONTEXT.md's "Cross-feature relationships" table
+      (member, group, branch, payment link, team role), write explicit
+      cases for what happens to each dependent — cascade, block, or
+      orphan. Do not skip this category just because the PRD didn't
+      mention it; that silence is exactly what causes production bugs.
 ```
 
 ## Priority guide
