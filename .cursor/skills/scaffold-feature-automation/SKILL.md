@@ -9,6 +9,9 @@ description: >-
 
 Read [AGENTS.md](../../AGENTS.md) first — this skill is a checklist, not a replacement.
 
+Assumes a feature branch is already checked out (see `create-feature-branch`)
+— don't scaffold new feature files directly on `main`.
+
 **Required first step, before the checklist below:** if this feature has no
 section in [APP_CONTEXT.md](../../../APP_CONTEXT.md) yet, add one now —
 don't scaffold files for an undocumented feature. See that file's
