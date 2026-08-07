@@ -6,6 +6,8 @@ Optional Cursor Agent Skills for this repo. **Standards live in [AGENTS.md](../.
 
 | Level | Who it's for | Focus |
 |-------|--------------|-------|
+| **Setup** | Anyone starting a new feature | Branching before work begins |
+| **Discovery** | QA analysts, before test design | PRD/Figma/Jira intake into APP_CONTEXT.md |
 | **Basic** | New contributors, first tests | Scaffolding, locators, layers |
 | **Test design** | QA analysts, before coding | Test cases, coverage, mapping to code |
 | **Implementation** | Automation engineers | Dataproviders, auth, API setup |
@@ -16,6 +18,8 @@ Optional Cursor Agent Skills for this repo. **Standards live in [AGENTS.md](../.
 
 | Skill | Level | Folder |
 |-------|-------|--------|
+| Create feature branch | Setup | `create-feature-branch/` |
+| Get context | Discovery | `get-context/` |
 | Scaffold feature automation | Basic | `scaffold-feature-automation/` |
 | Discover locators from UI | Basic | `discover-locators-from-ui/` |
 | Generate test cases | Test design | `generate-test-cases/` |
@@ -25,6 +29,13 @@ Optional Cursor Agent Skills for this repo. **Standards live in [AGENTS.md](../.
 | API test setup/teardown | Implementation | `api-test-setup-teardown/` |
 | Test data teardown | Implementation | `test-data-teardown/` |
 | Debug flaky E2E test | Maintenance | `debug-flaky-e2e-test/` |
+
+## New feature — full pipeline
+
+```
+create-feature-branch → get-context → generate-test-cases (approve) →
+map-test-cases-to-automation → scaffold-feature-automation → invoke test
+```
 
 ## Planned (add when needed)
 

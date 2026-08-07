@@ -19,8 +19,11 @@ Produces **test case documents** first — automation comes later via `map-test-
 
 ## Step 0 — required, not optional: sync APP_CONTEXT.md
 
-Before producing any test case, check whether the feature already has a
-section in [APP_CONTEXT.md](../../../APP_CONTEXT.md).
+Prefer running `get-context` first — it owns turning a PRD/Figma/Jira ticket
+into a reviewed `APP_CONTEXT.md` section. If that already ran for this
+feature, skip straight to reading it below. If it was skipped, do the same
+check inline here before producing any test case: check whether the feature
+already has a section in [APP_CONTEXT.md](../../../APP_CONTEXT.md).
 
 - **Missing or incomplete?** Add/extend its section in the same turn you
   generate test cases — don't ask the user whether to do this, don't defer
@@ -110,6 +113,15 @@ Generate cases across these categories:
 | Markers | e2e, p0, login |
 ```
 
+## Approval gate — required, not optional
+
+1. Show the **full draft** of every test case in chat — no partial preview.
+2. Wait for explicit user approval ("approved", "looks good", "go ahead" —
+   not silence or an unrelated reply).
+3. Only after approval are cases considered final. Don't hand anything to
+   `map-test-cases-to-automation` before this gate clears.
+
 ## Next step
 
-Hand off automatable cases to `map-test-cases-to-automation` for layer mapping.
+Once approved, hand off automatable cases to `map-test-cases-to-automation`
+for layer mapping.
