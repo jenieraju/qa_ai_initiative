@@ -1,7 +1,7 @@
 # AGENTS.md
 
 Always-on conventions for this repo. Keep this file short — it loads every turn.
-App under test: [APP_CONTEXT.md](APP_CONTEXT.md). How-to workflows (progressive disclosure — do not paste skill steps here): if you are Claude Code, use [.claude/skills/](.claude/skills/); if you are Cursor (or another agent), use [.cursor/skills/](.cursor/skills/).
+App under test: [APP_CONTEXT.md](APP_CONTEXT.md). How-to workflows (progressive disclosure — do not paste skill steps here): if you are Claude Code, use [.claude/skills/](.claude/skills/) and [.claude/agents/ui-automation-agent.md](.claude/agents/ui-automation-agent.md); if you are Cursor (or another agent), use [.cursor/skills/](.cursor/skills/).
 
 ## Architecture (mandatory every change)
 
