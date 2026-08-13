@@ -6,9 +6,9 @@ These fields describe the project itself, not any one automation type — every
 agent this project uses reads them from here instead of asking again.
 
 - **Project name:** cofee-web (the app under test)
-- **Repo:** <FILL IN — cofee-web is a separate source repo from this automation suite; add its URL here>
+- **Repo:** https://github.com/KeyValueSoftwareSystems/cofee-web
 - **Team / owner:** <FILL IN>
-- **Doc/artifact locations:** `artifacts/` for PRDs (default, not yet created) — <FILL IN if there are additional locations, e.g. Jira project key, Figma file links>
+- **Doc/artifact locations:** `artifacts/` for PRDs (default, not yet created) — Figma export for the LMS feature supplied directly as a PDF (`LMS.pdf`), not a live Figma link — <FILL IN if there are additional locations, e.g. Jira project key>
 
 ## How agent files use this
 

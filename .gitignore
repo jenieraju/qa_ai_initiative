@@ -1,0 +1,22 @@
+# Python env & test artifacts
+.venv/
+venv/
+__pycache__/
+.pytest_cache/
+
+# Env & secrets
+.env
+!.env.example
+
+# Reports
+reports/
+
+# Cached auth (storage state)
+auth/*.json
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store

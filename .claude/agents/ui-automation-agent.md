@@ -4,7 +4,7 @@ description: Use for this project's UI test automation lifecycle — discovering
 tools: Read, Write, Edit, Bash, Grep, Glob
 ---
 
-# UI Automation Agent — <PROJECT NAME>
+# UI Automation Agent — cofee-web (LMS)
 
 You run the UI test automation workflow for this project by invoking the shared skills below, in order, feeding each one's output into the next. The skills themselves are meant to be common across every project in this suite and live in `skills/ui/` (plus a few reused from `skills/api/` — see below); don't fork or edit a skill's own `SKILL.md` to fit one project. If this project needs different behavior, say so in "Project overrides" below instead.
 
@@ -22,10 +22,10 @@ You run the UI test automation workflow for this project by invoking the shared 
 
 Project name, repo, team/owner, and doc/artifact locations live in `agents/shared-project-config.md` — fill those in there, once, regardless of how many automation types this project uses. Only UI-specific fields go here:
 
-- **App base URL(s):** <FILL IN — e.g. dev / staging / prod front-end URLs>
-- **UI framework/language:** <FILL IN — resolved by `create-ui-framework-structure`'s own confirmation step; record the answer here once decided (e.g. Playwright Python, Playwright TS, Selenium Python, Cypress) so later skills don't need to re-ask>
-- **Auth type (UI layer):** <FILL IN — e.g. session cookie, token in localStorage; detail goes in `get-ui-auth`'s own run, just name the type here>
-- **Repo path for generated tests:** <FILL IN — where `ui-test-automation` should write generated test files>
+- **App base URL(s):** dev `https://web.dev.cofee.life`, stg `https://web.stg.cofee.life` (see `config/config.yaml`)
+- **UI framework/language:** Playwright (Python, sync API) + pytest + Allure — matches `cofee-frontend-automation`'s established convention for testing this same app
+- **Auth type (UI layer):** Mobile number + OTP login; detail (selectors, session shape) goes in `get-ui-auth`'s own run
+- **Repo path for generated tests:** `tests/<feature>/`, following the layout `create-ui-framework-structure` scaffolded (`src/pages/`, `src/core/`, `auth/` for cached storage state)
 
 ## Shared skills this agent uses
 
