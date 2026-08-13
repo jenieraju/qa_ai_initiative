@@ -5,10 +5,10 @@ Copied from `agents/shared-project-config.md` on the `ui-automation` branch of
 These fields describe the project itself, not any one automation type — every
 agent this project uses reads them from here instead of asking again.
 
-- **Project name:** cofee-web (the app under test — see [APP_CONTEXT.md](../../APP_CONTEXT.md))
+- **Project name:** cofee-web (the app under test)
 - **Repo:** <FILL IN — cofee-web is a separate source repo from this automation suite; add its URL here>
 - **Team / owner:** <FILL IN>
-- **Doc/artifact locations:** [APP_CONTEXT.md](../../APP_CONTEXT.md) for app functional context (this repo); `artifacts/` for PRDs (default, not yet created) — <FILL IN if there are additional locations, e.g. Jira project key, Figma file links>
+- **Doc/artifact locations:** `artifacts/` for PRDs (default, not yet created) — <FILL IN if there are additional locations, e.g. Jira project key, Figma file links>
 
 ## How agent files use this
 
