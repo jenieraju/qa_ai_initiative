@@ -17,7 +17,7 @@ _Source: `cofee-web` — `src/constants/routes.ts`, `src/constants/permissions.t
   - "Leads analytics" is a tab (`LeadAnalytics` component) on the same `/lead-management/list` route as the leads table, not a separate page — `LeadList.tsx:55,59,580,630`.
 
 ### Figma
-_Source: `LMS.pdf` (uploaded directly as a file, not a live Figma link — visual-reference only, no MCP design-context/tokens available)_
+_Source: `LMS.pdf` (uploaded directly as a file, not a live Figma link — visual-reference only, no MCP design-context/tokens available); a live Figma link was also shared this pass (see Jira tickets below) but not fetched — Dev Mode MCP isn't enabled in this session_
 
 - **Screens/states covered:** Dashboard (populated, filtered, empty), Leads list (populated only — no empty-state variant shown), Leads analytics (2 populated variants + empty), Agents (populated + empty), Sources (populated, Ad sources variant, empty).
 - **Layout / component / copy notes:**
@@ -27,7 +27,7 @@ _Source: `LMS.pdf` (uploaded directly as a file, not a live Figma link — visua
 
 ### PRD
 
-- No PRD found — `LMS.pdf` (Figma) and the repo are the only sources this pass.
+- No PRD found — `LMS.pdf` (Figma), the repo, and the Jira epic below are the only sources this pass.
 
 ### Documents (other than the PRD)
 
@@ -35,9 +35,14 @@ _Source: `LMS.pdf` (uploaded directly as a file, not a live Figma link — visua
 
 ### Jira tickets
 
-- None shared.
+- **"Lead Management revamp: Dashboard, Leads List, Analytics, Agents & Sources"** (epic, no visible ticket ID — pasted as a screenshot; full text saved to `context/jira-lms-revamp-epic.md`). Scopes the same 5 pages as `LMS.pdf`, but with a critical timing detail `LMS.pdf` and the repo alone didn't surface:
+  - **Lead Dashboard is being *completely* revamped, "data inside built from scratch"** — the current `LeadManagementDashboard.tsx` implementation this pass tested against (matrix rows 1, 2, 3, 5) is explicitly the *outgoing* version, not the target state.
+  - **Leads List gets only minor updates** (Days Stuck column + the List/Analytics toggle) — matches what was already found in code; low risk of the List-tab rows going stale.
+  - **Leads Analytics is partly new**: it inherits the metrics/graphs currently on the old Dashboard, *plus* a new "Conversion/Distribution view on two graphs" not yet seen in code or `LMS.pdf`.
+  - **Agents and Sources are both "built from scratch"** — consistent with what code/`LMS.pdf` already showed as the current (and apparently also target) implementation for those two.
 
 ### Cross-track notes
 
 - No API-track section exists yet in this file (this is the first `get-ui-context`/`get-context` run for this project) — nothing to reconcile against yet.
+- **Flagging for a human decision, not resolving it here:** rows 1, 2, 3, 5 of `context/ui-test-case-matrix.md` (all Dashboard) were derived from the pre-revamp implementation. Per the epic above, that page is being rebuilt with different underlying data. Those 4 rows may need to be re-derived once the revamped Dashboard actually ships, rather than treated as durable coverage now. The Leads Analytics rows (12–16) may also be incomplete once the new Conversion/Distribution graphs land — this pass's matrix doesn't cover them, since they weren't visible in either the repo or `LMS.pdf`.
 <!-- ui-automation:end -->
