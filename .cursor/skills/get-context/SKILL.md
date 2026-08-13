@@ -1,99 +1,124 @@
 ---
 name: get-context
 description: >-
-  Gathers and documents feature context from a PRD/doc, Figma link or
-  screenshot, and/or Jira ticket, before any test cases are written. Use when
-  starting automation for a new feature, enhancement, or bug fix and
-  APP_CONTEXT.md doesn't yet cover it, or when asked to "get context for X".
-  Do NOT use to write test cases (see generate-test-cases) or when the
-  feature is already fully documented in APP_CONTEXT.md.
+  Gathers feature context from APP_CONTEXT.md and context_docs/ before
+  automating a flow. Use when starting automation for a new feature or the
+  next step of an already-automated flow, or when asked to "get context for
+  X". Do NOT use to write test cases (see generate-test-cases).
 ---
 
 # Get Context
 
 Second step of the new-feature pipeline (after `create-feature-branch`, before
-`generate-test-cases`). No Figma/Jira/Playwright MCP is configured in this
-repo — every artifact comes in as pasted text, a link, or an uploaded
-screenshot, never a live API call. Read [AGENTS.md](../../AGENTS.md) and
-`APP_CONTEXT.md`'s "Writing new tests" section first — that section is the
-required output shape and the reason this skill updates `APP_CONTEXT.md`
-directly instead of writing a separate context file per feature ("no
-separate per-feature context files... single section in *this* file").
+`generate-test-cases`). No Figma/Jira/Playwright MCP is configured — artifacts
+arrive as pasted text, a link, or an uploaded screenshot. Read
+[AGENTS.md](../../AGENTS.md) and `APP_CONTEXT.md`'s "Writing new tests" first.
 
-## Core rules
+## Long-run model (two tiers)
 
-1. **Never block on missing artifacts.** No PRD/Figma/Jira? Infer from
-   `src/page_objects/`, `src/steps/`, existing `tests/`, and
-   `APP_CONTEXT.md`, then interview the user only for the gaps that actually
-   block test design.
-2. **No hallucination.** Confirmed facts only; unconfirmed ones are labeled
-   `[Assumption]`, missing ones `[Unknown — needs confirmation]` — the same
-   pattern already used for "Members" in `APP_CONTEXT.md`.
-3. **Reuse the slug** from `create-feature-branch` (branch `feature/<slug>`)
-   for the new `## <Feature Name>` heading — don't invent a different one.
-4. **One section, no new files.** Output is always an addition/edit to
-   `APP_CONTEXT.md`, written in the same turn — never a `.context/*.md` file.
+| Source | Job | When written |
+|--------|-----|--------------|
+| `APP_CONTEXT.md` | Always-on **index**: domain, Features table, cross-feature links, short `##` sketch | Every turn agents may read it — keep it lean |
+| `context_docs/<slug>.md` | Living **feature record**: flow, AC gaps, coverage, locators, quirks | Created at **get-context**; enriched after automation; updated on every later step |
 
-## Workflow
+Do **not** wait until automation exists to create the context doc — test-case
+design needs it. Do **not** dump locator essays into `APP_CONTEXT.md`.
 
-1. **Ask what's available**, one question each, only for artifacts not yet
-   pasted in chat:
-   - PRD / doc (paste text or link)
-   - Figma (link, or paste/upload a screenshot — read it directly, no MCP)
-   - Jira ticket (paste the description/AC, or a link)
-   - Existing manual test cases, if any
-2. **Check `APP_CONTEXT.md` first.** If the feature already has a section (or
-   a row in "Features"), read it — don't re-derive what's already there; this
-   run only fills gaps.
-3. **Cross-check code.** Grep `src/page_objects/`, `src/steps/`,
-   `tests/test/` for anything already automated for this area; note routes,
-   locator patterns (see "Locator strategy notes" in `APP_CONTEXT.md`), and
-   existing coverage.
-4. **Cross-feature check.** If this feature creates/edits/deletes an entity
-   listed in `APP_CONTEXT.md`'s "Cross-feature relationships" table (member,
-   group, branch, payment link, team role), flag it explicitly — it must be
-   covered in test cases later, not just the happy path.
-5. **Gap interview.** Ask only about unknowns that block test design: roles
-   or permission gates, exact routes, required fields/validation rules,
-   whether the flow is reachable from more than one entry point.
-6. **Write the section** into `APP_CONTEXT.md`: what the feature does, real
-   flow/routes (ASCII flow like "Authentication & onboarding flow" above),
-   any field/locator quirks, and every unresolved item labeled per rule 2.
-   If this feature mutates a cross-feature entity, update that table row too
-   (step 4).
+Never invent facts. Label gaps `[Assumption]` or
+`[Unknown — needs confirmation]`. Reuse the `create-feature-branch` slug
+(`feature/<slug>`) for the `APP_CONTEXT.md` heading, `Detail:` link, and
+`context_docs/<slug>.md` filename.
 
-## Output shape (mirror existing sections)
+## 1. Read APP_CONTEXT.md first
+
+Use related high-level data (Features table, domain, cross-feature table,
+existing `##` section). Do not re-derive what is already written.
+
+## 2. Match context_docs/<slug>.md
+
+Aliases: `login` / `onboarding` → `authentication-onboarding`.
+
+**New flow** (no file yet):
+1. Ask only for artifacts not already in chat: PRD/doc, Figma (link or
+   screenshot), Jira AC, manual cases.
+2. Infer from `src/page_objects/`, `src/steps/`, `tests/`, and
+   `APP_CONTEXT.md`. Interview only gaps that block test design.
+3. Add/extend a **short** `## <Feature Name>` in `APP_CONTEXT.md` (one
+   paragraph + route sketch + `Detail: context_docs/<slug>.md`). Update the
+   cross-feature table if a listed entity is mutated.
+4. **Create** `context_docs/<slug>.md` with `Status: discovery` using the
+   template below.
+
+**Existing flow** (file exists — next step or re-run):
+1. Read `APP_CONTEXT.md`, follow `Detail:` into the context doc.
+2. Use that file as source of truth; only fill gaps for the *new* step.
+3. After the new step is designed/automated, **update the same file** —
+   never a second doc for the same slug.
+
+## 3. Cross-checks (both branches)
+
+- Grep `src/page_objects/`, `src/steps/`, `tests/test/` for coverage.
+- If this feature creates/edits/deletes a cross-feature entity (member,
+  group, branch, payment link, team role), record it under **Cross-feature
+  impact** in the context doc and in `APP_CONTEXT.md`'s table — later test
+  cases must cover cascade/block/orphan.
+
+## 4. Enrich after automation
+
+When four layers exist (see `scaffold-feature-automation`), same turn:
+- Set `Status:` to `partially-automated` or `automated`
+- Fill **Coverage** (PO/test paths) and confirmed locator/session/teardown notes
+- Keep `APP_CONTEXT.md` high-level; detail stays in the context doc only
+
+## Template — context_docs/<slug>.md
+
+Keep this lean. Do not copy a 300-line discovery dump.
 
 ```markdown
-## {Feature Name}
+# {Feature Name}
 
-{What it does — one paragraph, sourced from the PRD/Jira/Figma or app source,
-never invented.}
+Status: discovery | partially-automated | automated
 
-{Route/flow, ASCII diagram if multi-step.}
+## Summary
+{What it does — sourced from PRD/Jira/Figma/app, never invented.}
 
-Notes:
-- {Field/locator quirks, confirmed facts}
-- {Unconfirmed items — "[Assumption]" or "[Unknown — needs confirmation]"}
+## Flow
+{ASCII routes if multi-step.}
+
+## Coverage
+- Already automated: {paths, or "none yet"}
+- Not yet covered: {known gaps}
+
+## Cross-feature impact
+{Entities touched + cascade/block/orphan unknowns, or "none"}
+
+## Notes
+- {Confirmed quirks}
+- {Unconfirmed — "[Assumption]" / "[Unknown — needs confirmation]"}
 ```
 
 ## Done when
 
-- [ ] `APP_CONTEXT.md` has a `## <Feature Name>` section (new or extended),
-      written in the same turn
-- [ ] Every unconfirmed fact is labeled, none stated as settled without a
-      source
-- [ ] "Cross-feature relationships" table updated if this feature touches a
-      listed entity
-- [ ] No separate `.context/*.md` file was created
-- [ ] Reported to the user: "Context added to `APP_CONTEXT.md` → '<Feature
-      Name>'. Next: generate-test-cases for this feature."
+- [ ] `APP_CONTEXT.md` read; high-level reused, not re-derived
+- [ ] `context_docs/` checked for `<slug>.md`
+- [ ] New flow: short `APP_CONTEXT.md` section + **new** context doc
+      (`Status: discovery`) + `Detail:` link
+- [ ] Existing flow: matching context doc read and used
+- [ ] After automation: same context doc enriched; Status updated
+- [ ] Cross-feature table/section updated if needed
+- [ ] Every unconfirmed fact labeled
+- [ ] Reported: "Context: `APP_CONTEXT.md` → '<Feature>' +
+      `context_docs/<slug>.md` (Status: …). Next: generate-test-cases."
 
 ## Self-check
 
-Triggers: "get context for custom user role", "here's the PRD/Figma for the
-disable-payment-link feature, get context", "I have a Jira ticket for a new
-feature, help me understand it before we write tests".
-Does not trigger: "write test cases for login" (skip straight to
-`generate-test-cases` if `APP_CONTEXT.md` already covers it), "why is this
-test flaky" (`debug-flaky-e2e-test`).
+Triggers: "get context for custom user role", "automate the next groups
+wizard step", "here's the PRD for payment-link, get context".
+Does not trigger: "write test cases for login" (`generate-test-cases`),
+"why is this test flaky" (`debug-flaky-e2e-test`).
+
+## Later (when FE churn hurts)
+
+Add a `resync-feature` skill that diffs product changes against
+`context_docs/<slug>.md` and patches only drifted sections — do not build
+it until suites start breaking from undocumented UI/API drift.

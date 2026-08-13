@@ -13,8 +13,9 @@ description: >-
 First step of the new-feature pipeline: `create-feature-branch` → `get-context`
 → `generate-test-cases` → `map-test-cases-to-automation` →
 `scaffold-feature-automation`. Everything downstream reuses the slug decided
-here — for the `APP_CONTEXT.md` section heading, the branch name, and the
-`pytest.ini` feature marker.
+here — for the `APP_CONTEXT.md` section heading, the `context_docs/<slug>.md`
+filename (created at get-context, enriched after automation), the branch
+name, and the `pytest.ini` feature marker.
 
 ## 1. Derive the slug
 

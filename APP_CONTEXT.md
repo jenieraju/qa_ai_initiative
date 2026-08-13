@@ -78,9 +78,8 @@ feature's own section — don't leave it undocumented, and don't guess.
 
 ## Authentication & onboarding flow
 
-Already automated in this repo — see `src/page_objects/{login,onboarding,
-document_upload,payment_selection}_po.py` and
-`tests/test/auth/{test_login,test_onboarding}.py`.
+Already automated in this repo.
+Detail: [context_docs/authentication-onboarding.md](context_docs/authentication-onboarding.md).
 
 ```
 /login (mobile number + terms → OTP on same route)
@@ -112,8 +111,8 @@ Notes:
 
 ## Groups
 
-Already automated in this repo — see `src/page_objects/{groups,group_create}_po.py`
-and `tests/test/groups/test_group_create.py`.
+Already automated in this repo.
+Detail: [context_docs/groups.md](context_docs/groups.md).
 
 ```
 Authenticated session → /groups → New Group → /groups/create
@@ -176,48 +175,28 @@ selector — the pattern is usually one of the above.
 
 ## Writing new tests
 
-Follow `AGENTS.md`'s four-layer architecture and "Adding a new feature"
-checklist. Before automating a new cofee-web screen or feature:
+Follow `AGENTS.md`'s four-layer architecture. Context is two-tier for the
+long run — see `.cursor/skills/get-context/SKILL.md`.
 
-1. **Check this file first.** If the feature already has a section above
-   (or a row in "Features"), read it before doing anything else instead of
-   re-deriving what's already documented.
-2. **If it's not here yet, add it in the same turn — this is required, not
-   optional.** Whenever a PRD/requirement names a feature this file doesn't
-   cover — whether the ask is to generate test cases
-   (`.cursor/skills/generate-test-cases`), scaffold automation
-   (`.cursor/skills/scaffold-feature-automation`), or both — add a section
-   for it here *before or alongside* that work, unprompted. Don't wait to
-   be asked to "update the app context"; treat a new-feature PRD as
-   carrying that instruction implicitly, every time. Content: what it
-   does, the real flow/routes, any field or locator quirks — sourced from
-   the PRD and the app's real source, never invented. If a fact genuinely
-   isn't confirmed yet (e.g. real locators before
-   `discover-locators-from-ui` has run against the live app), say so
-   explicitly, the way "Members" below does — a documented unknown is
-   fine, a silent guess stated as fact is not.
-   - Keep it as a single section in *this* file — no separate per-feature
-     context files. A git diff on this file already gives full visibility
-     into exactly what context was added and when; splitting it out would
-     just add a sync step with nothing to show for it.
-3. **Check "Cross-feature relationships" above.** If the feature creates,
-   edits, or deletes an entity that table lists (member, group, branch,
-   payment link, team role), add/update its row, and make sure the test
-   cases this turn cover the cascade/block/orphan behavior explicitly —
-   not just the new feature's own happy path. This is exactly how a bug
-   like "deleting a member silently orphans their group's payment link"
-   gets caught in test design instead of in production.
-4. Read the real component source for that screen/feature in the app repo
-   — never guess selectors.
-5. Check the "Locator strategy notes" table above for the shared-component
-   locator pattern first.
-6. Keep updating this file as you learn things mid-implementation that
-   would have saved you time — same as always. This is how "Groups" above
-   got backfilled after the fact; the goal going forward is to not need
-   that backfill.
-7. **If the new feature's test stays `@pytest.mark.ignore`d** (placeholder
-   locators, missing test data, whatever the reason), add it to
-   `README.md` → "Next steps" in the same turn — same "required, not
-   optional" rule as this file. That section's whole job is "what's still
-   rough"; it goes stale the exact same way this file already did once
-   (see "Groups" above) if nobody's job is to keep it current.
+1. **Check this file first.** High-level only: Features table, domain,
+   cross-feature table, existing `##` sketches. Use what's here; don't
+   re-derive it. Keep this file lean — no locator essays.
+2. **Then open `context_docs/<slug>.md`.** Via `Detail:` or slug match.
+   That living record is the source for flows, coverage, and gaps from
+   discovery through later steps. Do not start from a blank page.
+3. **New flow (no context doc)?** Same turn, required:
+   - Add a short `##` section here (what it does, route sketch, labeled
+     unknowns — see "Members") plus `Detail: context_docs/<slug>.md`
+   - Create `context_docs/<slug>.md` with `Status: discovery` (template
+     in the get-context skill)
+   Facts from PRD/app only — never invented.
+4. **After automation lands**, enrich the **same** context doc
+   (`Status: partially-automated` or `automated`; Coverage; confirmed
+   locator/session notes). Do not create a second file for the same slug.
+5. **Check "Cross-feature relationships" above.** If the feature creates,
+   edits, or deletes a listed entity, update that row and cover
+   cascade/block/orphan in the test cases — not just the happy path.
+6. Read the real component source for that screen in the app repo —
+   never guess selectors. Check "Locator strategy notes" first.
+7. **If the new feature's test stays `@pytest.mark.ignore`d**, add it to
+   `README.md` → "Next steps" in the same turn.

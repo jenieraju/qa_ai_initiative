@@ -17,25 +17,21 @@ Produces **test case documents** first — automation comes later via `map-test-
 - User roles / personas (if RBAC)
 - Environments (dev, staging, etc.)
 
-## Step 0 — required, not optional: sync APP_CONTEXT.md
+## Step 0 — required, not optional: sync context
 
-Prefer running `get-context` first — it owns turning a PRD/Figma/Jira ticket
-into a reviewed `APP_CONTEXT.md` section. If that already ran for this
-feature, skip straight to reading it below. If it was skipped, do the same
-check inline here before producing any test case: check whether the feature
-already has a section in [APP_CONTEXT.md](../../../APP_CONTEXT.md).
+Prefer running `get-context` first — it owns the two-tier model
+(`APP_CONTEXT.md` index + living `context_docs/<slug>.md`). If that
+already ran, skip to reading those files. If skipped, do the same inline:
 
-- **Missing or incomplete?** Add/extend its section in the same turn you
-  generate test cases — don't ask the user whether to do this, don't defer
-  it to a follow-up, don't just note the gap. Domain facts come from the
-  PRD/spec and the app's real source only; anything not confirmed yet gets
-  flagged explicitly in the file (see "Members" there for the pattern),
-  never stated as settled fact.
-- **Already documented?** Read it, don't re-derive it.
+1. Read [APP_CONTEXT.md](../../../APP_CONTEXT.md) for high-level data
+   (section, Features row, cross-feature table).
+2. Read `context_docs/<slug>.md` (via `Detail:` or slug match) — primary
+   source for flows, gaps, and cross-feature impact. Don't re-derive it.
+3. **Missing both?** Add a short `APP_CONTEXT.md` section **and** create
+   `context_docs/<slug>.md` (`Status: discovery`) this turn — same rules
+   as `get-context`. Domain facts from PRD/spec/app only; unknowns labeled.
 
-This is what keeps `APP_CONTEXT.md` a live reference instead of drifting
-behind automation — it only works if it happens automatically, every time,
-not as an occasional manual cleanup.
+This is what keeps context usable from discovery through later steps.
 
 If any resulting test case is non-automatable or will ship
 `@pytest.mark.ignore`d (missing test data, unconfirmed locators, etc.),

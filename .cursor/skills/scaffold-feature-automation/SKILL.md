@@ -12,16 +12,18 @@ Read [AGENTS.md](../../AGENTS.md) first — this skill is a checklist, not a rep
 Assumes a feature branch is already checked out (see `create-feature-branch`)
 — don't scaffold new feature files directly on `main`.
 
-**Required first step, before the checklist below:** if this feature has no
-section in [APP_CONTEXT.md](../../../APP_CONTEXT.md) yet, add one now —
-don't scaffold files for an undocumented feature. See that file's
-"Writing new tests" for what belongs in it. This applies even if you
-skipped `generate-test-cases` and came here straight from a PRD.
+**Required first step, before the checklist below:** follow `get-context`.
+Read [APP_CONTEXT.md](../../../APP_CONTEXT.md), then
+`context_docs/<slug>.md`. Don't scaffold an undocumented feature — if
+either is missing, create the short index section + discovery context doc
+now (see `get-context`).
 
-**Required last step, after the checklist:** if the scaffolded test ships
-`@pytest.mark.ignore`d (placeholder locators, as in the "Verify" step
-below not being fully green yet), add it to `README.md` → "Next steps" —
-same turn, not a follow-up.
+**Required last step, after the checklist:** enrich the **same**
+`context_docs/<slug>.md` (Coverage, confirmed locators/session notes;
+`Status: partially-automated` or `automated`) and ensure
+`Detail: context_docs/<slug>.md` is on the `APP_CONTEXT.md` section. If
+the scaffolded test ships `@pytest.mark.ignore`d, also add it to
+`README.md` → "Next steps" — same turn.
 
 ## Inputs needed
 

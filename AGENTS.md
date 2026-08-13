@@ -1,7 +1,9 @@
 # AGENTS.md
 
 Always-on conventions for this repo. Keep this file short — it loads every turn.
-App under test: [APP_CONTEXT.md](APP_CONTEXT.md). How-to workflows: [.cursor/skills/](.cursor/skills/) (progressive disclosure — do not paste skill steps here).
+App under test: [APP_CONTEXT.md](APP_CONTEXT.md) (always-on index) and
+[context_docs/](context_docs/) (living per-feature records from discovery on).
+How-to workflows: [.cursor/skills/](.cursor/skills/) (progressive disclosure — do not paste skill steps here).
 
 ## Architecture (mandatory every change)
 
@@ -20,7 +22,7 @@ Never skip layers.
 
 ## Always-on rules
 
-- New feature from a PRD? Confirm/add its context in `APP_CONTEXT.md` first (see that file's "Writing new tests") — don't let it drift behind automation. If it ships `@pytest.mark.ignore`d, also add it to `README.md` → "Next steps" the same turn.
+- New feature from a PRD? `get-context`: short section in `APP_CONTEXT.md` + create/update `context_docs/<slug>.md` (see that file's "Writing new tests"). Extending a flow? Follow `Detail:` into the same context doc. After automation, enrich that doc (`Status:`). If a test ships `@pytest.mark.ignore`d, also add it to `README.md` → "Next steps".
 - Use `get_settings()` for config — never hardcode URLs, secrets, or credentials.
 - Parametrize from `tests/dataprovider/dp_*.py`.
 - On create of persistent data, register cleanup with `teardown_registry` (see `test-data-teardown` skill).

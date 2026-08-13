@@ -7,7 +7,7 @@ Optional Cursor Agent Skills for this repo. **Standards live in [AGENTS.md](../.
 | Level | Who it's for | Focus |
 |-------|--------------|-------|
 | **Setup** | Anyone starting a new feature | Branching before work begins |
-| **Discovery** | QA analysts, before test design | PRD/Figma/Jira intake into APP_CONTEXT.md |
+| **Discovery** | QA analysts, before test design | APP_CONTEXT.md index + living context_docs/<slug>.md |
 | **Basic** | New contributors, first tests | Scaffolding, locators, layers |
 | **Test design** | QA analysts, before coding | Test cases, coverage, mapping to code |
 | **Implementation** | Automation engineers | Dataproviders, auth, API setup |
@@ -41,6 +41,7 @@ map-test-cases-to-automation → scaffold-feature-automation → invoke test
 
 | Skill | Level | When to add |
 |-------|-------|-------------|
+| `resync-feature` | Maintenance | FE churn breaks suites / context_docs drift |
 | `interact-with-common-controls` | Basic | Dropdown/modal/wizard pain |
 | `handle-new-tab-window` | Implementation | Payment/OAuth flows |
 | `parallel-group-design` | Execution | Parallel race failures |
