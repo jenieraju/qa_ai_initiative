@@ -21,7 +21,12 @@ def ensure_logged_in_storage_state(context: BrowserContext) -> str:
     login = LoginPage(page, env["base_url"])
     login.goto_login()
     login.fill_mobile_and_continue(os.environ["USER_PHONE"])
-    login.fill_otp_and_continue(os.environ["USER_OTP"])  # raises NotImplementedError today
+    login.fill_otp_and_continue(os.environ["USER_OTP"])
+    # Wait for the post-login redirect to actually land before capturing
+    # storage_state, so the real session token is written to localStorage
+    # first (live-confirmed: lands on the generic Dashboard, not directly
+    # on /lead-management/dashboard - see context/ui-auth.md).
+    page.wait_for_load_state("networkidle")
     context.storage_state(path=str(_STORAGE_STATE_PATH))
     page.close()
     return str(_STORAGE_STATE_PATH)

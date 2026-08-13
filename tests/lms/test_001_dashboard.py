@@ -61,8 +61,9 @@ class TestLeadManagementDashboard:
         dashboard = LeadManagementDashboardPage(authenticated_page, base_url)
 
         with allure.step("Navigate to LMS dashboard for a zero-lead org"):
-            # NOTE: requires a pre-existing zero-lead org fixture in the target
-            # environment - this test cannot create that state itself via the UI.
+            # Live-confirmed 2026-08-13: the .env.dev test account is itself
+            # a zero-lead org already - no separate fixture needed for this
+            # specific account/environment.
             dashboard.goto_dashboard()
 
         with allure.step("Assert the empty-state funnel message is shown"):
