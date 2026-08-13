@@ -44,7 +44,7 @@ No `context/api-auth.md` exists in this project yet (greenfield). The underlying
 
 ## Session storage & reuse recommendation
 
-Cache the `localStorage` `token` key (plus `ORGANIZATION_ID`/`USER_ORGANIZATION_ID`) as a Playwright `storageState` after one real login, saved under `auth/` (already scaffolded, gitignored) — every test's fixture then launches with `storageState` set, never repeating the full mobile+OTP flow per test. Exception, per the shared suite convention: the login flow's own test cases (this feature's happy/negative auth-session rows) must still drive the real UI flow directly.
+Recommend `ui-test-automation` log in once per session/worker and reuse the resulting storage state (cookies + localStorage saved as a unit) rather than repeating the full UI login flow per test — `auth/` is already scaffolded (gitignored) for this. Exception, per the shared suite convention: the login flow's own test cases must still drive the real UI flow directly.
 
 ## Session staleness (token expiry mid-run)
 
