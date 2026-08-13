@@ -1,4 +1,11 @@
-"""Agents page object (/lead-management/agents). Locators from LMS.pdf visible text."""
+"""Agents page object (/lead-management/agents).
+
+Live-confirmed 2026-08-13. One correction versus the PDF-derived first draft:
+the real label is "Team Avg Time of Conversion", not "Team Avg Conversion
+Time". Also confirmed: with zero agent activity, the table still renders one
+row per real agent (zeroed stats, "--" for time fields) - it's not an empty
+table.
+"""
 
 from playwright.sync_api import Page
 
@@ -8,10 +15,10 @@ from src.pages.base_page import BasePage
 class AgentsPage(BasePage):
     def __init__(self, page: Page, base_url: str) -> None:
         super().__init__(page, base_url)
-        # --- Elements (text/role sourced from LMS.pdf - no data-testid confirmed) ---
+        # --- Elements (live-confirmed text/role - no data-testid found) ---
         self.team_avg_conversion_label = self.page.get_by_text("Team Average Conversion")
         self.team_avg_conversion_time_label = self.page.get_by_text(
-            "Team Avg Conversion Time"
+            "Team Avg Time of Conversion"
         )
         self.agents_above_average_label = self.page.get_by_text("Agents Above Average")
         self.agents_below_average_label = self.page.get_by_text("Agents Below Average")

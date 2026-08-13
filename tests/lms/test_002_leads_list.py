@@ -15,9 +15,41 @@ pytestmark = pytest.mark.regression
 @allure.feature("Lead Management")
 @allure.story("Leads List")
 class TestLeadsList:
+    @pytest.mark.p1
+    def test_leads_list_zero_leads_ever_shows_import_onboarding(self, authenticated_page):
+        allure.dynamic.title(
+            "With zero leads ever added, the List route shows an import-onboarding "
+            "screen instead of a table"
+        )
+        # New case discovered live 2026-08-13, not in the original 27-row
+        # matrix: for an org with zero leads *ever* (not just zero matching a
+        # filter), /lead-management/list shows "How would you like to import
+        # leads?" (CSV/Excel Upload or Add manually) - there's no table,
+        # search bar, filter, or Add Lead button in this state at all. This
+        # is the .env.dev account's actual real-world state - see
+        # context/ui-test-case-matrix.md follow-up on whether to add this as
+        # its own matrix row.
+
+        base_url = get_env_config()["base_url"]
+        leads_list = LeadsListPage(authenticated_page, base_url)
+
+        with allure.step("Navigate to leads list for a zero-leads-ever org"):
+            leads_list.goto_list()
+
+        with allure.step("Assert the import-onboarding screen is shown"):
+            assert_visible(leads_list.import_leads_heading)
+            assert_visible(leads_list.start_import_btn)
+            assert_visible(leads_list.add_manually_btn)
+
     @pytest.mark.smoke
     @pytest.mark.sanity
     @pytest.mark.p0
+    @pytest.mark.skip(
+        reason="requires an account with >=1 lead already added - the "
+        ".env.dev test account has zero leads ever, which shows a different "
+        "onboarding screen instead (see test_leads_list_zero_leads_ever_"
+        "shows_import_onboarding)"
+    )
     def test_leads_list_loads_with_populated_data(self, authenticated_page):
         allure.dynamic.title("Leads table renders correctly for an org with leads")
 
@@ -34,6 +66,12 @@ class TestLeadsList:
 
     @pytest.mark.sanity
     @pytest.mark.p0
+    @pytest.mark.skip(
+        reason="requires an account with >=1 lead already added - the "
+        ".env.dev test account has zero leads ever, so the Add Lead button "
+        "isn't even reachable (see test_leads_list_zero_leads_ever_shows_"
+        "import_onboarding)"
+    )
     def test_add_lead_button_visible_with_permission(self, authenticated_page):
         allure.dynamic.title("A user with lead_create can see and open the Add Lead action")
         # NOTE: requires the authenticated fixture's account to actually hold
@@ -53,6 +91,13 @@ class TestLeadsList:
             authenticated_page.wait_for_url("**/lead-management/add**")
 
     @pytest.mark.p1
+    @pytest.mark.skip(
+        reason="requires a pre-existing test account WITH lead_create removed "
+        "but WITH >=1 lead already added - this project has no role-fixture "
+        "mechanism yet, and the .env.dev account's zero-leads-ever state "
+        "would make the button absent for the wrong reason (the onboarding "
+        "screen, not the missing permission), producing a false-positive pass"
+    )
     def test_add_lead_button_hidden_without_permission(self, authenticated_page):
         allure.dynamic.title("A user without lead_create cannot see/use Add Lead")
         # NOTE: requires a pre-existing test account without lead_create -
@@ -68,6 +113,12 @@ class TestLeadsList:
             assert_hidden(leads_list.add_lead_btn)
 
     @pytest.mark.p1
+    @pytest.mark.skip(
+        reason="requires an account with >=1 lead already added - a search "
+        "bar doesn't exist at all in the .env.dev account's zero-leads-ever "
+        "onboarding state (see test_leads_list_zero_leads_ever_shows_import_"
+        "onboarding)"
+    )
     @pytest.mark.parametrize(
         "search_term", LeadsListTestData.ZERO_MATCH_SEARCH_TERMS
     )

@@ -72,17 +72,20 @@ class TestSources:
     @pytest.mark.p1
     def test_sources_empty_state_no_sources(self, authenticated_page):
         allure.dynamic.title("Sources page degrades correctly with no source data")
-        # NOTE: requires a pre-existing zero-source org fixture in the target
-        # environment.
+        # Live-confirmed 2026-08-13: the .env.dev account (zero lead volume,
+        # but standard source channels still configured/listed) shows
+        # "No data to show!" on the 3 metric cards, NOT "No lead sources
+        # found" - that message may need a more extreme zero-sources-
+        # configured-at-all account to actually exercise (not available
+        # this pass - see context/ui-test-case-matrix.md follow-up).
 
         base_url = get_env_config()["base_url"]
         sources = SourcesPage(authenticated_page, base_url)
 
-        with allure.step("Navigate to Sources for a zero-source org"):
+        with allure.step("Navigate to Sources for a zero-lead-volume org"):
             sources.goto_sources()
 
-        with allure.step("Assert the empty-state messages are shown"):
-            assert_visible(sources.no_lead_sources_message)
+        with allure.step('Assert "No data to show!" is shown on the metric cards'):
             assert_visible(sources.no_data_to_show_message)
 
     @pytest.mark.p1

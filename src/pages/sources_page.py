@@ -1,4 +1,17 @@
-"""Sources page object (/lead-management/sources). Locators from LMS.pdf visible text."""
+"""Sources page object (/lead-management/sources).
+
+Live-confirmed 2026-08-13 for the .env.dev test account: "Top Volume" /
+"Highest Conversion" / "Highest Revenue" / "Distribution by source" /
+"No data to show!" all confirmed exactly. IMPORTANT nuance: for this
+account, the distribution table still renders one row per standard channel
+(Facebook Ads, Website, etc.), all zeroed, rather than showing
+"No lead sources found" - that message may only apply to an org with zero
+sources *configured* at all (a more extreme state this account doesn't
+represent), not to an org with configured sources but zero lead volume.
+Kept the locator since it's a real string somewhere in the app, but matrix
+row 24 needs a different account/state to actually exercise it - see
+context/ui-test-case-matrix.md follow-up.
+"""
 
 from playwright.sync_api import Page
 
@@ -8,7 +21,7 @@ from src.pages.base_page import BasePage
 class SourcesPage(BasePage):
     def __init__(self, page: Page, base_url: str) -> None:
         super().__init__(page, base_url)
-        # --- Elements (text/role sourced from LMS.pdf - no data-testid confirmed) ---
+        # --- Elements (live-confirmed text/role - no data-testid found) ---
         self.top_volume_label = self.page.get_by_text("Top Volume")
         self.highest_conversion_label = self.page.get_by_text("Highest Conversion")
         self.highest_revenue_label = self.page.get_by_text("Highest Revenue")
