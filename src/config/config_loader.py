@@ -4,8 +4,17 @@ import os
 from pathlib import Path
 
 import yaml
+from dotenv import load_dotenv
 
-_CONFIG_PATH = Path(__file__).resolve().parent.parent.parent / "config" / "config.yaml"
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+_CONFIG_PATH = _PROJECT_ROOT / "config" / "config.yaml"
+
+# 1) Load .env (sets COFEE_ENV=dev|stg)
+load_dotenv(_PROJECT_ROOT / ".env")
+
+# 2) Load the env-specific file (.env.dev or .env.stg) for USER_PHONE/USER_OTP/etc.
+_env_name = os.environ.get("COFEE_ENV", "dev").strip().lower()
+load_dotenv(_PROJECT_ROOT / f".env.{_env_name}")
 
 
 def _load() -> dict:
