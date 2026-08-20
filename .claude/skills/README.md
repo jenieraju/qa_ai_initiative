@@ -4,15 +4,11 @@ This mirrors `skills/api/` (in [KeyValueSoftwareSystems/group_b_api_automation](
 
 Note: unlike upstream's `skills/ui/` + `skills/api/` split, this repo keeps all skills flat under `.claude/skills/<name>/SKILL.md` (Claude Code's own discovery path) — adjust any upstream path references (`skills/ui/...`, `skills/api/...`) accordingly when copying a skill or agent file in from there.
 
-**Status:** the full core sequence (`setup-project` → `create-ui-framework-structure` → `get-ui-context` → `get-ui-auth` → `ui-test-design` → `ui-test-automation`) has been dogfooded end-to-end against a real target app — not just drafted and never exercised. That run surfaced real gaps (a browser-tool bootstrapping gap, inconsistent locator-extraction depth across pages, no local worker-concurrency guidance, no re-check of the matrix's data-state assumptions before generating, an unenforced verification-classification report line), which are now folded back into the four skills below marked **validated + patched**. `ui-test-design` ran cleanly with no patch needed. `ui-coverage-audit` and `teardown` are still drafted-only — no live run has exercised either yet.
+**Status:** the full core sequence (`create-ui-framework-structure` → `get-ui-context` → `get-ui-auth` → `ui-test-design` → `ui-test-automation`) has been dogfooded end-to-end against a real target app — not just drafted and never exercised. That run surfaced real gaps (a browser-tool bootstrapping gap, inconsistent locator-extraction depth across pages, no local worker-concurrency guidance, no re-check of the matrix's data-state assumptions before generating, an unenforced verification-classification report line), which are now folded back into the four skills below marked **validated + patched**. `ui-test-design` ran cleanly with no patch needed. `ui-coverage-audit` and `teardown` are still drafted-only — no live run has exercised either yet.
+
+Note: `setup-project` (the generic "which automation type does this project need, here's what to copy in" onboarding skill) isn't included here — this project is solely UI automation and was already bootstrapped, so that skill has nothing to do here. It's still part of the upstream suite's convention for genuinely new projects; see `agents/shared-project-config.md` in `group_b_api_automation` if bootstrapping one from scratch elsewhere.
 
 ## Skills needed
-
-**Entry point:**
-
-| Skill | Purpose |
-|---|---|
-| `setup-project` | ✅ **Drafted** — see `.claude/skills/setup-project/SKILL.md`. Run once, before anything else, on a brand-new target project. Asks whether it needs API automation, UI automation, or both, then produces a checklist of which skill/agent files to copy in and which config placeholders to fill — never copies files itself, never invents a skill that doesn't exist yet. |
 
 **Core build sequence** (mirrors the API suite's shape):
 
@@ -29,4 +25,4 @@ Note: unlike upstream's `skills/ui/` + `skills/api/` split, this repo keeps all 
 
 **Shared, at `.claude/skills/teardown/`** (not UI-specific): clears stale (pre-today) resources from either suite's runtime registry — the cleanup logic never depended on which suite created an entry. Drafted, not yet dogfooded against a real run's created-resources registry.
 
-See `.claude/agents/ui-automation-agent.md` for how these skills plug into a single UI automation workflow, and `.claude/agents/shared-project-config.md` for the project-identity fields both the API and UI agents read from instead of duplicating.
+See `.claude/agents/ui-automation-agent.md` for how these skills plug into a single UI automation workflow and for this project's identity fields (name, repo, team/owner, doc locations) — folded directly into that file's own Project config section rather than a separate shared-config file, since this project only runs UI automation. If API automation is added later, split those fields back out into a shared file both agents read, rather than duplicating them.
