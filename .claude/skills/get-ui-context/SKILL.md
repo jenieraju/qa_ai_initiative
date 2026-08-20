@@ -71,6 +71,8 @@ Once repo access is confirmed, check for structural source-of-truth material in 
 
 If none of these exist, say so explicitly and ask the user where the app's routes/pages are defined rather than guessing.
 
+**When live introspection is used, extract locator-relevant DOM detail (`data-testid`/`id`/`name`/`aria-label` attributes, not just an accessibility-tree read of visible text) with the same depth for every page in scope — never only for one flow.** A read-only DOM attribute dump (e.g. `page.evaluate` querying `input, button, [data-testid]`) is still look-and-snapshot, not a side effect, so it's within the same permission already granted for navigating that page. Doing this for only one page (typically the login flow, because `get-ui-auth` demands it) while leaving every other page at an accessibility-tree-only read is a real, observed failure mode: it silently produces two different confidence tiers in the same `ui-context.md` — some rows with real, resilient selectors and others with only text/role guesses — and `ui-test-automation` inherits that gap as brittle locators and avoidable bugs it only catches by actually running the suite. If time/turn budget forces a shallower pass on some pages, say so explicitly per page in the Page/route inventory's "Confirmed" column, rather than let the inconsistency pass silently.
+
 ## Repo-derived business signal (when repo is available)
 
 The repo isn't just for page/route shape — when available, mine it for business-rule signal too, before reaching for Figma or a PRD:
