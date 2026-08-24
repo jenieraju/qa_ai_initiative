@@ -1,0 +1,18 @@
+node_modules/
+
+# Env
+.env
+
+# Cached auth session
+auth/*.json
+
+# Playwright / Allure runtime output
+test-results/
+playwright-report/
+allure-results/*
+!allure-results/.gitkeep
+allure-report/*
+!allure-report/.gitkeep
+
+# Playwright MCP dev-session artifacts
+.playwright-mcp/
