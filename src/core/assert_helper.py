@@ -44,11 +44,14 @@ def assert_url_contains(page, expected_fragment: str, *, timeout: int | None = N
     expect(page).to_have_url(re.compile(re.escape(expected_fragment)), timeout=timeout)
 
 
+@allure.step("Assert URL does not contain: {unexpected_fragment}")
+def assert_url_does_not_contain(
+    page, unexpected_fragment: str, *, timeout: int | None = None
+) -> None:
+    """Web-first: waits for the URL to stop matching, e.g. leaving /login after auth."""
+    expect(page).not_to_have_url(re.compile(re.escape(unexpected_fragment)), timeout=timeout)
+
+
 @allure.step("Assert page title: {expected_title}")
 def assert_page_title(page, expected_title: str, *, timeout: int | None = None) -> None:
     expect(page).to_have_title(expected_title, timeout=timeout)
-
-
-@allure.step("Assert true: {label}")
-def assert_true(condition: bool, label: str = "condition") -> None:
-    assert condition, f"{label} was expected to be True"

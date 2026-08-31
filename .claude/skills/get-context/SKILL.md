@@ -10,9 +10,10 @@ description: >-
 # Get Context
 
 Second step of the new-feature pipeline (after `create-feature-branch`, before
-`generate-test-cases`). No Figma/Jira/Playwright MCP is configured — artifacts
-arrive as pasted text, a link, or an uploaded screenshot. Read
-[AGENTS.md](../../AGENTS.md) and `APP_CONTEXT.md`'s "Writing new tests" first.
+`generate-test-cases`). No Figma or Jira MCP is configured — those artifacts
+arrive as pasted text, a link, or an uploaded screenshot. A browser MCP
+(`chrome-devtools`) may be connected; if it is, use it to check the live app. Read
+[AGENTS.md](../../../AGENTS.md) and `APP_CONTEXT.md`'s "Writing new tests" first.
 
 ## Long-run model (two tiers)
 

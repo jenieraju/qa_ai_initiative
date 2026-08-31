@@ -15,7 +15,8 @@ from src.core.session_state import session_state
 SCREENSHOTS_DIR_NAME = "screenshots"
 
 
-def _safe_filename(nodeid: str) -> str:
+def safe_filename(nodeid: str) -> str:
+    """Turn a pytest nodeid into a filesystem-safe artifact name."""
     return re.sub(r"[^\w.-]+", "_", nodeid).strip("_")[:180]
 
 
@@ -42,6 +43,7 @@ def capture_failure_artifacts(
     output_dir: Path,
     nodeid: str,
     error_message: str = "",
+    console_logs: list[str] | None = None,
 ) -> list:
     """Attach screenshot + context to Allure; return pytest-html extras."""
     html_extra: list = []
@@ -60,11 +62,13 @@ def capture_failure_artifacts(
         screenshot = page.screenshot(full_page=True)
     except Exception as exc:
         msg = f"Could not capture screenshot: {exc}"
-        allure.attach(msg, name="failure-screenshot-error", attachment_type=allure.attachment_type.TEXT)
+        allure.attach(
+            msg, name="failure-screenshot-error", attachment_type=allure.attachment_type.TEXT
+        )
         html_extra.append(html_extras.text(msg, name="Screenshot error"))
         return html_extra
 
-    screenshot_path = screenshots_dir / f"{_safe_filename(nodeid)}.png"
+    screenshot_path = screenshots_dir / f"{safe_filename(nodeid)}.png"
     screenshot_path.write_bytes(screenshot)
 
     allure.attach(
@@ -94,7 +98,6 @@ def capture_failure_artifacts(
             attachment_type=allure.attachment_type.HTML,
         )
 
-    console_logs = getattr(page, "_console_logs", [])
     if console_logs:
         log_text = "\n".join(console_logs)
         allure.attach(

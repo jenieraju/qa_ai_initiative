@@ -33,7 +33,9 @@ Load order:
 
 CLI override: `pytest --env uat1` (aliases mapped in `src/core/settings.py`, e.g. `uat1 → uat01`).
 
-URLs are derived from `ENV_URL_MAP` in `settings.py`. Override with `BASE_URL`, `API_BASE_URL`, and `ADMIN_PORTAL_URL` in env files. Required vars are validated at collection time.
+URLs come from `ENV_URL_MAP` in `settings.py`, which ships defaults for **dev only** — the one environment with confirmed hosts. For `stg`/`uat01`/`prod` you must set `BASE_URL` and `API_BASE_URL` in the env file; a missing value fails at collection time rather than silently pointing the run at the wrong host. An unknown `--env` value fails the same way.
+
+The active environment is resolved from `--env`, else `APP_ENV` in `.env`, else `dev`.
 
 Copy the `.env.*.example` templates and fill in credentials via config only — never in dataproviders or committed files.
 
@@ -44,6 +46,8 @@ Use `FEATURE_<SUITE>_*` vars with fallback to `SHARED_*` when suites share the s
 ```
 FEATURE_LOGIN_USER_EMAIL → SHARED_USER_EMAIL
 ```
+
+Environment-specific **entity** data goes here too, not into a dataprovider — e.g. `FEATURE_QUICK_COLLECT_PAYER_NAME` names an existing member to use as the payer. A dataprovider row that hardcodes an org's member name breaks the moment that member is renamed, and can't be pointed at a different environment.
 
 ## Architecture (top → bottom, dependency only)
 
@@ -78,6 +82,7 @@ pytest --env dev -n 2 --dist loadgroup
 | `--target-browser` | `chromium`, `firefox`, or `webkit` |
 | `--headless` | `true` / `false` |
 | `--record-video` | `true` / `false` |
+| `--open-allure` | Open Allure after the run (default `true`; use `false` in CI) |
 
 ### Markers
 
@@ -105,9 +110,25 @@ output/
   junit-results.xml         # JUnit XML, consumable directly by any CI system
   logs/
     execution.log           # full DEBUG-level log_file output
+  screenshots/              # full-page PNG per failed test
+  traces/                   # Playwright trace .zip per failed test
 ```
 
 `output/` (and its subfolders) is created automatically if missing — nothing to set up by hand. It's gitignored; never commit it.
+
+### Debugging a failure
+
+Every failed test leaves a full-page screenshot, the page source, browser console
+logs, and a **Playwright trace** — all attached to Allure and written to
+`output/`. The trace is the one to reach for first: it replays the run with DOM
+snapshots, network activity, and a screenshot per action.
+
+```bash
+playwright show-trace output/traces/<test-nodeid>.zip
+```
+
+Traces are recorded for every test but kept only for failures, so a green run
+costs nothing on disk.
 
 ### What's required
 
@@ -211,16 +232,49 @@ Save authenticated sessions to `.auth/{profile}.json`. Tests marked `@pytest.mar
 ## Tooling
 
 ```bash
-invoke lint          # ruff --fix + black
-invoke precommit     # run all pre-commit hooks
+invoke unit               # fast no-browser gate (layers, doc sync, deps) — what CI and pre-commit run
+invoke lint               # ruff --fix + black
+invoke lint-check         # same checks, no file modification (CI / pre-test)
+invoke sync-requirements  # regenerate requirements.txt from pyproject.toml
+invoke precommit          # run all pre-commit hooks
 invoke clean         # remove artifacts
 invoke report        # generate Allure HTML report
 invoke report-files  # open the per-file report index (output/reports/index.html)
 ```
 
+## CI
+
+No CI pipeline is configured for this repo yet. The local gate is
+`.pre-commit-config.yaml`'s `framework-unit-tests` hook — `ruff check` +
+`black --check`, then `pytest -m unit` (layer-boundary, doc-sync, dependency
+and teardown checks) — which runs on every commit via `invoke precommit` or
+`pre-commit install`. There is no automated e2e run; trigger the suite
+manually with `invoke test --env <env>` against a real environment and real
+credentials when you need one.
+
+## Framework self-tests
+
+`pytest -m unit` (no browser, seconds to run):
+
+| Test | Guards |
+|---|---|
+| `test_layer_boundaries.py` | Locators stay in page objects; no layer skipped; no `sleep` |
+| `test_app_context_sync.py` | Every pytest.ini feature marker has an APP_CONTEXT.md section |
+| `test_readme_sync.py` | Every fully-ignored feature is explained in "Next steps" |
+| `test_skills_sync.py` | Skill front-matter is valid and `.cursor/skills` symlink intact |
+| `test_dependency_sync.py` | requirements.txt matches pyproject.toml; everything pinned |
+| `test_layer_boundaries.py` | also caught a real violation in `login_steps.py` when added |
+| `test_teardown_registry.py` | Cleanup ordering and failure isolation |
+
 ## Next steps
 
-Login, individual onboarding, and basic group creation are real, working automation against `web.dev.cofee.life` — not placeholders.
+Login, basic group creation, and **Quick Collect** are real, working automation against `web.dev.cofee.life` — not placeholders. Quick Collect is 11 tests covering the create-link happy path, amount bounds, submission guards, cancel, search and success-page navigation (`pytest --env dev -m quick_collect`).
+
+**`test_individual_onboarding` is currently failing — app drift, not a flake.** The individual onboarding flow gained a `/select-category` step; the test still expects `/groups` straight after account selection. The app's auth route map also lists a `/create-branch` step this suite has never seen. Repairing it needs a `discover-locators-from-ui` pass against a fresh mobile number to learn both screens — see `context_docs/authentication-onboarding.md` → "Notes".
+
+**Quick Collect leaves data behind.** Each happy-path run creates a real payment order on dev and nothing cleans it up: the app's API reference documents a *Cancel a Payment Order* operation but its REST path is unconfirmed. Tests always tick "Do not send payment link to payers" so no real person is notified — never remove that step to "test the real thing" without checking who owns the number in the members list.
+
+**Members routes are now confirmed** (`/members`, `/members/add` — a route, not a modal — and `/members/:memberId`), read from the app's own route map, along with a `DELETE .../member/{memberId}` endpoint that makes member teardown wireable. The locators and field set are still unconfirmed.
 
 **Members is the current placeholder-selector example**: a full four-layer scaffold exists (`src/page_objects/{members,member_create}_po.py`, `tests/test/members/test_member_create.py`), but every locator, the route, and the required field set are unconfirmed guesses. It stays `@pytest.mark.ignore` until someone runs the `discover-locators-from-ui` skill against the live Members tab and confirms them — see `APP_CONTEXT.md` → "Members".
 
@@ -228,4 +282,4 @@ Organization onboarding is written but also `@pytest.mark.ignore`d, pending real
 
 See `AGENTS.md` for full coding conventions.
 
-Optional Cursor Agent Skills (workflows, not duplicate rules) live in `.cursor/skills/` — see the README there for the full catalog by level.
+Agent Skills (workflows, not duplicate rules) live in `.claude/skills/` — see the README there for the full catalog by level. `.cursor/skills` is a symlink to that directory so Cursor and Claude Code read one copy.

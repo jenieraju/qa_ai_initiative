@@ -1,8 +1,15 @@
 """Invoke task runner for the UI automation framework."""
 
+import sys
+import tomllib
+import webbrowser
 from pathlib import Path
 
 from invoke import task
+
+# Always run pytest under the interpreter invoke itself is running on, so a
+# venv-activated shell and a bare `invoke` never pick different Pythons.
+PYTHON = sys.executable
 
 
 @task
@@ -32,6 +39,36 @@ def lint(c):
     c.run("black .")
 
 
+@task(name="lint-check")
+def lint_check(c):
+    """Check formatting and lint without modifying any files (CI / pre-test)."""
+    c.run("ruff check .")
+    c.run("black --check .")
+
+
+@task(name="sync-requirements")
+def sync_requirements(c):
+    """Regenerate requirements.txt from pyproject.toml's dependency lists."""
+    project = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))["project"]
+    lines = [
+        "# Generated from pyproject.toml — edit dependencies there, "
+        "then run `invoke sync-requirements`.",
+        "# tests/test/core/test_dependency_sync.py fails if the two drift apart.",
+        *project["dependencies"],
+        "",
+        "# dev",
+        *project["optional-dependencies"]["dev"],
+    ]
+    Path("requirements.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    print("requirements.txt regenerated from pyproject.toml")
+
+
+@task
+def unit(c):
+    """Run the fast no-browser framework tests (what pre-commit and CI gate on)."""
+    c.run(f"{PYTHON} -m pytest -m unit -q --no-header -p no:cacheprovider")
+
+
 @task
 def precommit(c):
     """Run all pre-commit hooks."""
@@ -47,10 +84,14 @@ def precommit(c):
     }
 )
 def test(c, env="dev", markers="not ignore", parallel=0, args=""):
-    """Clean, lint, and run pytest."""
+    """Clean, lint-check, and run pytest.
+
+    Uses lint-check rather than lint: rewriting source as a side effect of
+    running the tests is surprising mid-debug. Run `invoke lint` to autofix.
+    """
     clean(c)
-    lint(c)
-    cmd = f'pytest -m "{markers}" --env {env} {args}'
+    lint_check(c)
+    cmd = f'{PYTHON} -m pytest -m "{markers}" --env {env} {args}'
     if parallel and int(parallel) > 0:
         cmd += f" -n {parallel} --dist loadgroup"
     c.run(cmd)
@@ -65,7 +106,7 @@ def test(c, env="dev", markers="not ignore", parallel=0, args=""):
 )
 def test_files(c, env="dev", markers="not ignore", args=""):
     """Run each test file separately; generate a report set per file under output/reports/."""
-    cmd = f'python -m src.core.per_file_report_runner --env {env} --markers "{markers}"'
+    cmd = f'{PYTHON} -m src.core.per_file_report_runner --env {env} --markers "{markers}"'
     if args:
         cmd += f" -- {args}"
     c.run(cmd)
@@ -77,7 +118,8 @@ def report_files(c):
     index = Path("output/reports/index.html")
     if not index.exists():
         raise SystemExit("No per-file reports found. Run `invoke test-files` first.")
-    c.run(f"xdg-open {index}", warn=True)
+    # webbrowser works on macOS/Linux/Windows; xdg-open is Linux-only.
+    webbrowser.open(index.resolve().as_uri())
 
 
 @task
@@ -101,7 +143,7 @@ def report(c):
 def onboarding(c, env="dev", headless="false", open_report="true"):
     """Run individual onboarding E2E and generate a readable Allure report."""
     cmd = (
-        f'python3.11 -m pytest --env {env} --headless {headless} '
+        f"{PYTHON} -m pytest --env {env} --headless {headless} "
         f'-m "onboarding and not ignore" tests/test/auth/test_onboarding.py -vv'
     )
     c.run(cmd)

@@ -18,7 +18,7 @@ TODO before removing @pytest.mark.ignore:
     assignment unconfirmed).
   - Confirm whether a delete-member API exists — if so, wire
     teardown_registry (see AGENTS.md -> "Teardown" and
-    .cursor/skills/test-data-teardown/SKILL.md) instead of leaving this
+    .claude/skills/test-data-teardown/SKILL.md) instead of leaving this
     without cleanup.
 """
 

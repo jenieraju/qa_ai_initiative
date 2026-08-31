@@ -69,12 +69,12 @@ def print_report_urls(
         # Do NOT print file:// for Allure — browsers block local JSON and the UI looks empty.
         lines.append(f"  Allure:   {allure_report}  (do not open via file://)")
         lines.append(f"            Open: allure open {allure_report}")
-        lines.append(f"            Or:   allure serve {allure_results or allure_report.parent / 'allure-results'}")
+        lines.append(
+            f"            Or:   allure serve {allure_results or allure_report.parent / 'allure-results'}"
+        )
     elif allure_results and allure_results.exists() and any(allure_results.iterdir()):
         lines.append(f"  Allure:   {allure_results} (raw results — generate first)")
-        lines.append(
-            f"            Open: allure serve {allure_results}"
-        )
+        lines.append(f"            Open: allure serve {allure_results}")
     if len(lines) == 1:
         lines.append("  (no report artifacts found)")
     print("\n".join(lines), flush=True)

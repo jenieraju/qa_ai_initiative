@@ -4,7 +4,6 @@ repos:
     hooks:
       - id: ruff
         args: [--fix]
-      - id: ruff-format
 
   - repo: https://github.com/psf/black
     rev: 24.10.0
@@ -13,10 +12,12 @@ repos:
 
   - repo: local
     hooks:
-      - id: app-context-sync
-        name: APP_CONTEXT.md sync check
-        description: Fails if a pytest.ini feature marker has no matching APP_CONTEXT.md section.
-        entry: python -m pytest -m unit -q
+      - id: framework-unit-tests
+        name: Framework unit tests (layers, docs, deps, teardown)
+        description: >
+          Runs the no-browser unit suite: four-layer boundaries, APP_CONTEXT.md /
+          README.md / skills sync, dependency pinning, and the teardown registry.
+        entry: python -m pytest -m unit -q --no-header -p no:cacheprovider
         language: system
         pass_filenames: false
         always_run: true

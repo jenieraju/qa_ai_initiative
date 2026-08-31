@@ -2,12 +2,14 @@
 
 import contextlib
 import platform
+import shutil
 import sys
 import tomllib
 from datetime import datetime
 from importlib import metadata
 from pathlib import Path
 
+import allure
 import pytest
 from playwright.sync_api import Page
 
@@ -18,15 +20,22 @@ TESTS_ROOT = REPO_ROOT / "tests"
 if str(TESTS_ROOT) not in sys.path:
     sys.path.insert(0, str(TESTS_ROOT))
 
-from src.core.failure_artifacts import capture_failure_artifacts  # noqa: E402
+from src.core.failure_artifacts import capture_failure_artifacts, safe_filename  # noqa: E402
 from src.core.report_urls import print_report_urls  # noqa: E402
 from src.core.session_state import session_state  # noqa: E402
-from src.core.settings import get_settings, resolve_env_name  # noqa: E402
+from src.core.settings import get_settings  # noqa: E402
 from src.core.teardown import teardown_registry  # noqa: E402
 
 OUTPUT_DIR = REPO_ROOT / "output"
 ALLURE_RESULTS_DIR = OUTPUT_DIR / "allure-results"
 LOGS_DIR = OUTPUT_DIR / "logs"
+TRACES_DIR = OUTPUT_DIR / "traces"
+
+TRUTHY = {"1", "true", "yes", "on"}
+
+
+def _as_bool(value) -> bool:
+    return str(value).strip().lower() in TRUTHY
 
 
 def _resolve_allure_results_dir(config) -> Path:
@@ -41,8 +50,15 @@ def _resolve_allure_results_dir(config) -> Path:
             return Path(value)
     return ALLURE_RESULTS_DIR
 
-# Track the most recently opened page/tab for failure screenshots.
+
+# Pages/tabs opened by the *current* test, newest last — used to pick the page a
+# failure screenshot is taken from. Reset per test so a leaked page from an
+# earlier test can never supply a later test's screenshot.
 _active_pages: list[Page] = []
+
+# Browser console output per page, keyed by id(page); avoids writing private
+# attributes onto Playwright objects. Cleared with _active_pages.
+_console_logs: dict[int, list[str]] = {}
 
 
 def pytest_addoption(parser) -> None:
@@ -75,38 +91,57 @@ def pytest_addoption(parser) -> None:
     )
 
 
+def _clean_allure_results(config) -> None:
+    """Empty the allure results dir once per run, on the controller only.
+
+    allure-pytest's own --clean-alluredir runs in every process, so under
+    `-n N` each xdist worker would wipe the results its siblings already wrote.
+    """
+    if hasattr(config, "workerinput"):  # xdist worker — the controller cleaned already
+        return
+    allure_dir = _resolve_allure_results_dir(config)
+    if allure_dir.exists():
+        shutil.rmtree(allure_dir, ignore_errors=True)
+    allure_dir.mkdir(parents=True, exist_ok=True)
+
+
+def _apply_cli_overrides(config, settings) -> None:
+    """Fold --headless / --record-video into settings before any fixture reads them.
+
+    Applied here rather than in a session fixture: get_settings() is cached per
+    resolved env name, so mutating the single instance at configure time makes
+    the override visible to every call site regardless of fixture ordering.
+    """
+    headless_override = config.getoption("--headless")
+    if headless_override is not None:
+        settings.headless = _as_bool(headless_override)
+
+    video_override = config.getoption("--record-video")
+    if video_override is not None:
+        settings.record_video = _as_bool(video_override)
+
+
 def pytest_configure(config) -> None:
     env_override = config.getoption("--env")
-    resolve_env_name(env_override)
-    get_settings(env_override)
+    settings = get_settings(env_override)
 
-    target_browser = config.getoption("--target-browser")
+    # --target-browser wins; otherwise honour TARGET_BROWSER from the env files.
+    # Without this the env var is silently ignored while the Allure environment
+    # report still claims it was the browser used.
+    target_browser = config.getoption("--target-browser") or settings.target_browser
     if target_browser:
         config.option.browser = [target_browser]
+        settings.target_browser = target_browser
 
-    markers = [
-        ("e2e", "End-to-end UI tests"),
-        ("p0", "Priority 0 — critical path"),
-        ("p1", "Priority 1 — high importance"),
-        ("p2", "Priority 2 — lower priority"),
-        ("login", "Login and authentication flows"),
-        ("onboarding", "New user onboarding flow"),
-        ("groups", "Group creation and management flows"),
-        ("members", "Member creation and management flows"),
-        ("unit", "Fast unit tests for core framework utilities (no browser)"),
-        ("ignore", "Excluded from default test runs"),
-        ("auth_profile", "Load Playwright storage state from .auth/{name}.json"),
-        ("xdist_group", "Group tests for pytest-xdist loadgroup distribution"),
-    ]
-    for name, description in markers:
-        config.addinivalue_line("markers", f"{name}: {description}")
+    _apply_cli_overrides(config, settings)
+    _clean_allure_results(config)
 
 
 def pytest_sessionstart(session) -> None:
     """Bootstrap report output dirs and write Allure environment metadata.
 
-    Runs after pytest_configure (so --clean-alluredir has already cleaned
-    the active allure results dir) and once per process, including each xdist worker.
+    Runs after pytest_configure (which cleaned the active allure results dir)
+    and once per process, including each xdist worker.
     """
     allure_dir = _resolve_allure_results_dir(session.config)
     for directory in (OUTPUT_DIR, allure_dir, LOGS_DIR):
@@ -130,9 +165,7 @@ def _write_allure_environment(allure_dir: Path = ALLURE_RESULTS_DIR) -> None:
         "Execution.Timestamp": datetime.now().isoformat(timespec="seconds"),
     }
     lines = [f"{key}={value}" for key, value in properties.items()]
-    (allure_dir / "environment.properties").write_text(
-        "\n".join(lines) + "\n", encoding="utf-8"
-    )
+    (allure_dir / "environment.properties").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def _read_framework_version() -> tuple[str, str]:
@@ -142,24 +175,6 @@ def _read_framework_version() -> tuple[str, str]:
         return project["name"], project["version"]
     except Exception:
         return "unknown", "0.0.0"
-
-
-@pytest.fixture(scope="session", autouse=True)
-def _configure_settings(pytestconfig) -> None:
-    env_override = pytestconfig.getoption("--env")
-    settings = get_settings(env_override)
-
-    browser_override = pytestconfig.getoption("--target-browser")
-    if browser_override:
-        settings.target_browser = browser_override
-
-    headless_override = pytestconfig.getoption("--headless")
-    if headless_override is not None:
-        settings.headless = str(headless_override).strip().lower() in {"1", "true", "yes", "on"}
-
-    video_override = pytestconfig.getoption("--record-video")
-    if video_override is not None:
-        settings.record_video = str(video_override).strip().lower() in {"1", "true", "yes", "on"}
 
 
 @pytest.fixture(autouse=True)
@@ -181,20 +196,61 @@ def _run_data_teardown():
 def _track_active_page(request) -> None:
     # @pytest.mark.unit tests are pure Python (e.g. core utility tests) and
     # must not force a browser launch — skip requesting `page` for them.
+    _active_pages.clear()
+    _console_logs.clear()
     if request.node.get_closest_marker("unit") is None:
         _register_active_page(request.getfixturevalue("page"))
     yield
+    _active_pages.clear()
+    _console_logs.clear()
 
 
 def _register_active_page(page: Page) -> None:
     _active_pages.append(page)
-    page._console_logs = []  # attached here for failure-artifact capture below
-    page.on("console", lambda msg: page._console_logs.append(f"[{msg.type}] {msg.text}"))
+    logs = _console_logs.setdefault(id(page), [])
+    page.on("console", lambda msg: logs.append(f"[{msg.type}] {msg.text}"))
+    page.on("popup", _register_active_page)
 
-    def on_popup(popup: Page) -> None:
-        _register_active_page(popup)
 
-    page.on("popup", on_popup)
+def console_logs_for(page: Page) -> list[str]:
+    """Browser console output captured for `page` during the current test."""
+    return _console_logs.get(id(page), [])
+
+
+@pytest.fixture(autouse=True)
+def _capture_trace(request):
+    """Record a Playwright trace per test; keep the .zip only when the test fails.
+
+    A trace is the one artifact that actually explains a flake (DOM snapshots,
+    network, per-action screenshots) — open it with `playwright show-trace <zip>`.
+    Stopping here rather than in a report hook is deliberate: the browser context
+    must still be alive when tracing stops.
+    """
+    if request.node.get_closest_marker("unit") is not None:
+        yield
+        return
+
+    context = request.getfixturevalue("page").context
+    context.tracing.start(screenshots=True, snapshots=True, sources=True)
+
+    yield
+
+    failed = any(
+        getattr(getattr(request.node, f"rep_{phase}", None), "failed", False)
+        for phase in ("setup", "call")
+    )
+    if not failed:
+        with contextlib.suppress(Exception):
+            context.tracing.stop()
+        return
+
+    TRACES_DIR.mkdir(parents=True, exist_ok=True)
+    trace_path = TRACES_DIR / f"{safe_filename(request.node.nodeid)}.zip"
+    with contextlib.suppress(Exception):
+        context.tracing.stop(path=str(trace_path))
+    if trace_path.exists():
+        allure.attach.file(str(trace_path), name="playwright-trace", extension="zip")
+        print(f"\n  Trace: playwright show-trace {trace_path}", flush=True)
 
 
 @pytest.fixture(autouse=True)
@@ -208,17 +264,17 @@ def _apply_timeouts(request) -> None:
 
 
 @pytest.fixture(scope="session")
-def browser_type_launch_args(browser_type_launch_args, pytestconfig):
-    settings = get_settings(pytestconfig.getoption("--env"))
+def browser_type_launch_args(browser_type_launch_args):
+    settings = get_settings()
     updated = dict(browser_type_launch_args)
     updated["headless"] = settings.headless
     return updated
 
 
 @pytest.fixture
-def browser_context_args(browser_context_args, request, pytestconfig):
+def browser_context_args(browser_context_args, request):
     """Load storage state when @pytest.mark.auth_profile('name') is present."""
-    settings = get_settings(pytestconfig.getoption("--env"))
+    settings = get_settings()
     updated = dict(browser_context_args)
 
     if settings.record_video:
@@ -260,6 +316,7 @@ def pytest_runtest_makereport(item, call):
         output_dir=output_dir,
         nodeid=item.nodeid,
         error_message=error_message,
+        console_logs=console_logs_for(page),
     )
 
 
@@ -277,6 +334,9 @@ def pytest_sessionfinish(session, exitstatus) -> None:
     """Generate Allure HTML, print report URLs, and optionally open Allure in the browser."""
     # xdist workers finish separately; only the controller/main process should open the report.
     if hasattr(session.config, "workerinput"):
+        return
+    # --collect-only ran no tests; there is nothing worth generating or opening.
+    if session.config.getoption("--collect-only"):
         return
 
     config = session.config

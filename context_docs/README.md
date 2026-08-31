@@ -16,4 +16,4 @@ feature needs for test design and later steps.
 Filename = `create-feature-branch` slug (`feature/<slug>` → `<slug>.md`).
 Aliases: `login` / `onboarding` → `authentication-onboarding.md`.
 
-See `.cursor/skills/get-context/SKILL.md` for the template and rules.
+See `.claude/skills/get-context/SKILL.md` for the template and rules.

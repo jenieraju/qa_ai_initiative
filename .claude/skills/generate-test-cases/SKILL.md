@@ -1,9 +1,12 @@
 ---
 name: generate-test-cases
 description: >-
-  Generates structured manual/E2E test cases from requirements, user stories, or
-  acceptance criteria before writing automation code. Use when planning coverage,
-  reviewing a feature spec, or asked to write test cases.
+  Generates structured manual/E2E test cases (TC-IDs, priority, steps, expected
+  results) from requirements, user stories, or acceptance criteria, then waits
+  for approval. Use when planning coverage, reviewing a feature spec, or asked
+  to "write test cases" for a feature. Do NOT use to write automation code or
+  map cases to layers (map-test-cases-to-automation), and do NOT use to gather
+  the feature context itself (get-context).
 ---
 
 # Generate Test Cases
@@ -19,23 +22,16 @@ Produces **test case documents** first — automation comes later via `map-test-
 
 ## Step 0 — required, not optional: sync context
 
-Prefer running `get-context` first — it owns the two-tier model
-(`APP_CONTEXT.md` index + living `context_docs/<slug>.md`). If that
-already ran, skip to reading those files. If skipped, do the same inline:
+1. Read [APP_CONTEXT.md](../../../APP_CONTEXT.md) — section, Features row,
+   cross-feature table.
+2. Read `context_docs/<slug>.md` (via `Detail:` or slug match) — the primary
+   source for flows, gaps and cross-feature impact. Don't re-derive it.
+3. **Either file missing?** Run `get-context` — it owns creating them and the
+   rules for doing it. Don't reproduce that work here: two copies of the same
+   instructions is exactly the drift `.claude/skills/README.md` warns about.
 
-1. Read [APP_CONTEXT.md](../../../APP_CONTEXT.md) for high-level data
-   (section, Features row, cross-feature table).
-2. Read `context_docs/<slug>.md` (via `Detail:` or slug match) — primary
-   source for flows, gaps, and cross-feature impact. Don't re-derive it.
-3. **Missing both?** Add a short `APP_CONTEXT.md` section **and** create
-   `context_docs/<slug>.md` (`Status: discovery`) this turn — same rules
-   as `get-context`. Domain facts from PRD/spec/app only; unknowns labeled.
-
-This is what keeps context usable from discovery through later steps.
-
-If any resulting test case is non-automatable or will ship
-`@pytest.mark.ignore`d (missing test data, unconfirmed locators, etc.),
-add it to `README.md` → "Next steps" too, same turn — same rule.
+Test-case design without a context doc is guesswork, so this is a gate, not a
+suggestion.
 
 ## Output format
 
@@ -92,6 +88,10 @@ Generate cases across these categories:
 - Flag **non-automatable** cases (CAPTCHA, 3rd-party SMS OTP without test hook)
 - Note **shared mutable state** (same org/branch) for parallel group planning
 - Do not embed real passwords or API keys in test data
+- Any case that is non-automatable or will ship `@pytest.mark.ignore`d
+  (missing test data, unconfirmed locators) goes in `README.md` → "Next
+  steps" in the same turn — `tests/test/core/test_readme_sync.py` fails
+  otherwise
 
 ## Example (abbreviated)
 
@@ -121,3 +121,20 @@ Generate cases across these categories:
 
 Once approved, hand off automatable cases to `map-test-cases-to-automation`
 for layer mapping.
+
+## Done when
+
+- [ ] `APP_CONTEXT.md` + `context_docs/<slug>.md` read (or created) first
+- [ ] Every coverage-checklist category addressed or explicitly ruled out
+- [ ] Cross-feature impact cases written for every entity this feature mutates
+- [ ] Each case has a TC ID, priority, `Automatable`, and markers
+- [ ] No real credentials or API keys in test data
+- [ ] Full draft shown in chat and **explicitly approved** before handoff
+- [ ] Non-automatable / to-be-ignored cases added to `README.md` → "Next steps"
+
+## Self-check
+
+Triggers: "write test cases for the payment-link feature", "here's the PRD,
+what should we cover", "generate P0 cases for group creation".
+Does not trigger: "get context for custom user role" (`get-context`), "turn
+these cases into pytest files" (`map-test-cases-to-automation`).

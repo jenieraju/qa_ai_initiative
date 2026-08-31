@@ -67,13 +67,15 @@ def run_test_file(
         "--env",
         env,
         f"--alluredir={allure_results}",
-        "--clean-alluredir",
         f"--html={report_dir / 'report.html'}",
         "--self-contained-html",
         f"--junitxml={report_dir / 'junit-results.xml'}",
         f"--log-file={report_dir / 'execution.log'}",
+        # Each file runs in its own pytest process; without this every one of
+        # them would open its own Allure browser tab. This runner prints a
+        # single index at the end instead.
+        "--open-allure=false",
         "-ra",
-        "-s",
         "--strict-markers",
         *pytest_args,
     ]
@@ -105,9 +107,7 @@ def run_test_file(
         slug=slug,
         exit_code=completed.returncode,
         report_dir=str(report_dir.relative_to(REPO_ROOT)),
-        allure_report=(
-            str(allure_report.relative_to(REPO_ROOT)) if generated_allure else None
-        ),
+        allure_report=(str(allure_report.relative_to(REPO_ROOT)) if generated_allure else None),
         collected=True,
     )
 

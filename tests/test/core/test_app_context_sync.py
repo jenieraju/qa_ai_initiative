@@ -30,6 +30,7 @@ HEADING_ALIASES = {
     "onboarding": "onboarding",
     "groups": "groups",
     "members": "members",
+    "quick_collect": "quick collect",
 }
 
 pytestmark = pytest.mark.unit

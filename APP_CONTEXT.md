@@ -42,7 +42,7 @@ test cases.
 | **Group** | Payment links (interval/amount config lives on the group); Members (roster) | Deleting/editing a group with an active payment cycle or non-empty roster — **unconfirmed, no delete-group API exists yet** (see "Groups" below) |
 | **Member** | Group rosters; Payment links (recipients); Attendance records; Team role assignment (Branch Admin / Group Admin) | Deleting/editing a member — does it cascade, block if dependents exist, or orphan the related group/payment/attendance/role record? **Unconfirmed — no deletion feature exists yet; see "Members" below** |
 | **Team role** (Branch Admin / Group Admin) | Assigned to a Member | If the member holding a role is deleted or demoted — does the role vanish, block the action, or reassign? Unconfirmed |
-| **Payment link** | Group members (recipients) | Member/group deletion while a cycle is active or pending — unconfirmed |
+| **Payment link** | Group members (recipients); Quick Collect payers | Member/group deletion while a cycle is active or pending — still unconfirmed, but now *testable*: Quick Collect creates a payment order against an existing member, and a `DELETE .../member/{memberId}` endpoint exists. A *Cancel a Payment Order* operation is documented in the app's API reference but its REST path is unconfirmed — see `context_docs/quick-collect.md` |
 
 **Rule:** when a new feature's PRD touches an entity in the left column,
 add/update its row here in the same pass as adding the feature's own
@@ -65,7 +65,7 @@ feature's own section — don't leave it undocumented, and don't guess.
 | Reports | Multiple report types, Excel/CSV export |
 | Docs | In-app API reference, API keys, webhook event reference |
 | Subscription | Plan management, KYC verification, billing |
-| Quick Collect | One-off payment link generation, no group membership |
+| Quick Collect | One-off payment link generation, no group membership — see "Quick Collect" below |
 
 ## Environments
 
@@ -130,9 +130,38 @@ Notes:
   is automated so far — editing, member assignment, and any further
   wizard steps are not yet covered.
 
+## Quick Collect
+
+Automated in this repo (happy path + amount validation).
+Detail: [context_docs/quick-collect.md](context_docs/quick-collect.md).
+
+```
+Authenticated session → /quick-collect/create-link
+    → Fee Amount (2–200000) + Notes  [+ "Do not send payment link to payers"]
+    → select payer(s) from the members list
+    → CTA "Send" (notifying) or "Create" (suppressed)
+    → confirm dialog → /quick-collect/success
+```
+
+Notes:
+- Gated on permission `PAYMENT_ORDER_CREATE` and on completed KYC.
+- **The CTA label depends on the suppress-notifications checkbox** — "Send"
+  becomes "Create" when it is checked. Don't hardcode "Send".
+- Automation always suppresses notifications: the dev member list contains a
+  real phone number, and the payment order is created either way.
+- Only the "Add from members list" tab renders on the dev account; "Add
+  manually" / "Import file" / "Add from group" are conditional and unconfirmed.
+- Teardown gap: created payment orders are not cleaned up — a cancel operation
+  is documented but its REST path is unconfirmed (see the context doc).
+
 ## Members
 
-Not yet confirmed against the live app. A creation-flow scaffold exists
+Route confirmed from the live bundle: `/members` list, `/members/add` (a
+route, not a modal), `/members/:memberId` details. A
+`DELETE v1/organisation/{orgId}/branch/{branchId}/member/{memberId}` endpoint
+exists, so member teardown is wireable.
+
+The creation-flow scaffold is still otherwise unconfirmed against the live app. A creation-flow scaffold exists
 (`src/page_objects/{members,member_create}_po.py`,
 `tests/test/members/test_member_create.py`) but every locator, the route,
 and the required field set are placeholders — the test stays
@@ -168,6 +197,8 @@ have none. Shared components behave predictably once you know the pattern:
 | `RadioGroup`/`RadioButton` | the underlying `<input>` gets `data-testid={option.id}` — check the `options` array passed in for a real id before assuming there's none |
 | `Dropdown` | the closed-state button has no testid by default; open it and target options by their generated `id="{filterLabel or 'dropdown'}_{value}"` |
 | `FileUpload` | hidden file input's `id` follows `"{label}_input_id"` — target with an attribute selector |
+| Helper text under an `Input` | `text-grey60`, **always rendered** — not a validation error. Invalid input is signalled by disabling the submit CTA instead (confirmed on Quick Collect). Probe with a valid value before asserting on it |
+| Primary CTA label | can be **state-dependent** — Quick Collect's flips "Send" → "Create" when notifications are suppressed. Don't assume one label |
 
 General rule: check the actual shared component in the app's
 `src/components/` before assuming a locator doesn't exist or guessing a
@@ -176,7 +207,7 @@ selector — the pattern is usually one of the above.
 ## Writing new tests
 
 Follow `AGENTS.md`'s four-layer architecture. Context is two-tier for the
-long run — see `.cursor/skills/get-context/SKILL.md`.
+long run — see `.claude/skills/get-context/SKILL.md`.
 
 1. **Check this file first.** High-level only: Features table, domain,
    cross-feature table, existing `##` sketches. Use what's here; don't

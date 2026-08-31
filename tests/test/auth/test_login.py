@@ -1,7 +1,9 @@
 """End-to-end login tests.
 
 Valid login uses FEATURE_LOGIN_MOBILE_NUMBER / FEATURE_LOGIN_OTP from settings.
-An existing onboarded user lands on /groups (confirmed on web.dev.cofee.life).
+The landing route after login depends on the account and role (an org Owner
+lands on /dashboard, other accounts on /groups), so this test asserts only
+that login succeeded and attaches the actual landing URL.
 After a successful valid login, the Playwright storage state is saved to
 .auth/default.json so later tests (e.g. group creation) can reuse the session.
 Invalid-mobile scenarios stay @pytest.mark.ignore until the live error copy is verified.
@@ -11,8 +13,8 @@ import allure
 import pytest
 
 from dataprovider.dp_login import get_login_test_data
-from src.constants.routes import GROUPS_PATH
-from src.core.assert_helper import assert_url_contains
+from src.constants.routes import LOGIN_PATH
+from src.core.assert_helper import assert_url_does_not_contain
 from src.core.auth_storage import DEFAULT_AUTH_PROFILE
 from src.core.settings import get_settings
 from src.steps.login_steps import (
@@ -55,8 +57,10 @@ class TestLogin:
                 settings.login_mobile_number,
                 settings.login_otp,
             )
-            # Existing user with an org lands on /groups (not /dashboard).
-            assert_url_contains(page, GROUPS_PATH)
+            # The landing route varies by account and role — an org Owner lands
+            # on /dashboard, other accounts on /groups — so assert only that the
+            # login page was left behind, and record where it actually landed.
+            assert_url_does_not_contain(page, LOGIN_PATH)
             user_saves_authenticated_session(page, DEFAULT_AUTH_PROFILE)
             allure.attach(
                 page.url, name="post-login-url", attachment_type=allure.attachment_type.TEXT

@@ -1,5 +1,6 @@
 """Pydantic-based application settings with environment resolution."""
 
+import os
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -15,12 +16,17 @@ ENV_NAME_ALIASES: dict[str, str] = {
     "dev": "dev",
     "stg": "stg",
     "staging": "stg",
-    "uat": "uat",
+    "uat": "uat01",
     "uat1": "uat01",
     "uat01": "uat01",
     "prod": "prod",
     "production": "prod",
 }
+
+# Known environment names. Only envs with confirmed hosts get a URL default;
+# the rest must supply BASE_URL / API_BASE_URL from .env.<env> or they fail
+# validation — a placeholder default would silently point a run at the wrong host.
+KNOWN_ENV_NAMES: frozenset[str] = frozenset({"dev", "stg", "uat01", "prod"})
 
 # Derive URLs from resolved env name — never hardcode hosts elsewhere.
 ENV_URL_MAP: dict[str, dict[str, str]] = {
@@ -29,26 +35,15 @@ ENV_URL_MAP: dict[str, dict[str, str]] = {
         "api_base_url": "https://api.dev.cofee.life",
         "admin_portal_url": "",
     },
-    "stg": {
-        "base_url": "https://stg.example.com",
-        "api_base_url": "https://api-stg.example.com",
-        "admin_portal_url": "https://admin-stg.example.com",
-    },
-    "uat01": {
-        "base_url": "https://uat01.example.com",
-        "api_base_url": "https://api-uat01.example.com",
-        "admin_portal_url": "https://admin-uat01.example.com",
-    },
-    "prod": {
-        "base_url": "https://www.example.com",
-        "api_base_url": "https://api.example.com",
-        "admin_portal_url": "https://admin.example.com",
-    },
 }
 
 
 def resolve_env_name(raw_env: str | None = None) -> str:
-    """Resolve CLI/env alias to a canonical environment name."""
+    """Resolve a CLI value, else APP_ENV from .env, else 'dev' — to a canonical name."""
+    if not raw_env:
+        # .env is the documented place to pin a default env; read it before falling back.
+        load_dotenv(REPO_ROOT / ".env", override=False)
+        raw_env = os.environ.get("APP_ENV")
     env = (raw_env or "dev").strip().lower()
     return ENV_NAME_ALIASES.get(env, env)
 
@@ -83,7 +78,9 @@ class Settings(BaseSettings):
     default_timeout_ms: int = Field(default=30_000, alias="DEFAULT_TIMEOUT_MS")
     navigation_timeout_ms: int = Field(default=60_000, alias="NAVIGATION_TIMEOUT_MS")
 
-    credentials_encryption_key: str = Field(default="", alias="CREDENTIALS_ENCRYPTION_KEY")
+    # Bearer token for API-only precondition/cleanup calls against api_base_url.
+    # Optional: empty unless the target env issues a static automation token.
+    api_token: str = Field(default="", alias="API_TOKEN")
 
     # Login is mobile number + OTP (src/features/authentication/pages/login).
     # Optional FEATURE_* vars with fallback chain for shared mobile/OTP reuse.
@@ -106,6 +103,13 @@ class Settings(BaseSettings):
         default="", alias="FEATURE_ONBOARDING_BANK_ACCOUNT_NUMBER"
     )
     feature_onboarding_bank_ifsc: str = Field(default="", alias="FEATURE_ONBOARDING_BANK_IFSC")
+
+    # Quick Collect needs an existing member to act as the payer. The members
+    # list is org data, not a fixture, so the name comes from the env file
+    # rather than being hardcoded or guessed from "whichever row is first".
+    feature_quick_collect_payer_name: str = Field(
+        default="", alias="FEATURE_QUICK_COLLECT_PAYER_NAME"
+    )
 
     target_browser: str = Field(default="chromium", alias="TARGET_BROWSER")
     headless: bool = Field(default=True, alias="HEADLESS")
@@ -144,26 +148,45 @@ def _apply_url_map(settings: Settings, env_name: str) -> Settings:
     return settings
 
 
-def _validate_required(settings: Settings) -> None:
+def _validate_required(settings: Settings, env_name: str) -> None:
     """Fail fast at import/collection time when required vars are missing."""
-    missing: list[str] = []
-    if not settings.base_url:
-        missing.append("BASE_URL")
-    if not settings.api_base_url:
-        missing.append("API_BASE_URL")
+    if env_name not in KNOWN_ENV_NAMES:
+        raise ValueError(
+            f"Unknown environment '{env_name}'. Known environments: "
+            f"{', '.join(sorted(KNOWN_ENV_NAMES))} (aliases in ENV_NAME_ALIASES)."
+        )
+    missing = [
+        name
+        for name, value in (
+            ("BASE_URL", settings.base_url),
+            ("API_BASE_URL", settings.api_base_url),
+        )
+        if not value
+    ]
     if missing:
         raise ValueError(
-            f"Missing required environment variables: {', '.join(missing)}. "
-            f"Set them in .env / .env.<env> or update ENV_URL_MAP in settings.py."
+            f"Missing required environment variables for env '{env_name}': "
+            f"{', '.join(missing)}. Set them in .env.{env_name} (copy "
+            f".env.{env_name}.example) or add the env to ENV_URL_MAP in settings.py."
         )
 
 
 @lru_cache
-def get_settings(env_override: str | None = None) -> Settings:
-    """Return cached settings; never instantiate Settings directly elsewhere."""
-    env_name = resolve_env_name(env_override or None)
+def _build_settings(env_name: str) -> Settings:
+    """Build and validate settings for one canonical env name (cached per env)."""
     load_environment_files(env_name)
     settings = Settings(app_env=env_name)
     settings = _apply_url_map(settings, env_name)
-    _validate_required(settings)
+    _validate_required(settings, env_name)
     return settings
+
+
+def get_settings(env_override: str | None = None) -> Settings:
+    """Return the cached settings for the target env; never instantiate Settings directly.
+
+    Cached on the *resolved* env name, so `get_settings()`, `get_settings("dev")`
+    and `get_settings("DEV")` all return the same object. Runtime overrides
+    applied in conftest (headless, browser, video) must be visible to every
+    call site, which only holds if there is exactly one instance per env.
+    """
+    return _build_settings(resolve_env_name(env_override or None))

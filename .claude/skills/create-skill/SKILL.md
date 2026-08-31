@@ -6,8 +6,8 @@ description: >-
   "add a skill for X", "make this workflow a skill", or "turn this into a
   reusable skill". Do NOT use to perform the workflow itself (e.g. actually
   scaffolding a page object or writing a test — see
-  ../../.cursor/skills/scaffold-feature-automation or create-dataprovider), and
-  do NOT use for editing AGENTS.md or general framework-rule changes.
+  scaffold-feature-automation or create-dataprovider), and do NOT use for
+  editing AGENTS.md or general framework-rule changes.
 ---
 
 # Create Skill
@@ -27,14 +27,16 @@ skills.
 
 - Read `AGENTS.md` at the repo root (this repo has no `CLAUDE.md` — `AGENTS.md`
   is the conventions doc).
-- Read `.cursor/skills/README.md` for the level guide and the "don't duplicate
-  AGENTS.md" rule that also applies to `.claude/skills`.
+- Read `.claude/skills/README.md` for the level guide and the "don't duplicate
+  AGENTS.md" rule. All skills live in `.claude/skills/`; `.cursor/skills` is a
+  symlink to it so Cursor and Claude Code share one copy — never write a second
+  copy under `.cursor/`.
 - Find and read 2–3 real examples of the task in this repo — actual page
   objects (`src/page_objects/*_po.py`), page actions, steps, test files
   (`tests/test/**/test_*.py`), dataproviders (`tests/dataprovider/dp_*.py`), or
   `tests/conftest.py` — whichever apply to the task. Name every file you read
   in your response.
-- If an equivalent skill already exists in `.cursor/skills/`, read it in full —
+- If an equivalent skill already exists in `.claude/skills/`, read it in full —
   it is the closest style reference and may cover the same task already (ask
   whether to port it instead of writing fresh).
 - If no real example of the task exists anywhere in the repo, **stop and say
@@ -54,16 +56,16 @@ description: >-
 ```
 
 Mirror the folded (`>-`) description style and "Use when / do NOT use" shape
-from `.cursor/skills/create-dataprovider/SKILL.md` and
-`.cursor/skills/debug-flaky-e2e-test/SKILL.md`.
+from `.claude/skills/create-dataprovider/SKILL.md` and
+`.claude/skills/debug-flaky-e2e-test/SKILL.md`.
 
 ## 4. Write the body as a numbered/checklist procedure, not prose
 
 - Order steps to match the repo's real pipeline for that task. For anything
   touching the four-layer stack, the order is
   `page object → page actions → steps → dataprovider → test file → pytest.ini marker`
-  (see `AGENTS.md` "Adding a new feature" and
-  `.cursor/skills/scaffold-feature-automation/SKILL.md`) — adjust only if the
+  (see `AGENTS.md` "Architecture" and
+  `.claude/skills/scaffold-feature-automation/SKILL.md`) — adjust only if the
   task's real pipeline differs.
 - Every file-creating step names the exact path and a real reference file to
   mirror, e.g. "mirror `src/page_objects/login_po.py` for locator naming
@@ -74,8 +76,10 @@ from `.cursor/skills/create-dataprovider/SKILL.md` and
   assertions/no hard sleeps). For everything else write "see AGENTS.md" — do
   not restate the whole file.
 - Include the actual local run commands from `tasks.py` (`invoke test --env
-  dev`, `invoke test --env dev --parallel 2`, `invoke report`) or direct
-  `pytest` invocations from `README.md` — never guess flags.
+  dev`, `invoke test --env dev --parallel 2`,
+  `invoke test-files --env dev --args="--headless false -vv"`, `invoke report`)
+  — never guess flags; `debug-flaky-e2e-test` names the flags this repo does
+  and doesn't have.
 
 ## 5. End with a "Done when" checklist
 
@@ -94,13 +98,27 @@ After writing, list 3 example user messages that should trigger the new skill
 and 2 that should not. If any fail, rewrite the `description` — this is the
 only field that determines invocation.
 
-## 7. Keep it under ~150 lines
+## 7. Verify every API you reference actually exists
 
-If it's longer, some of `AGENTS.md` got duplicated — cut it and link instead.
+Before finishing, grep the repo for each attribute, helper, fixture, marker,
+CLI flag, and package you named. `tests/test/core/test_skills_sync.py` checks
+`get_settings().<attr>` references against the real `Settings` fields, but it
+cannot catch a nonexistent method or a pytest plugin that isn't installed.
+
+## 8. Fit the budget — both caps are enforced
+
+`test_skills_sync.py` enforces **220 lines per skill** and **1,800 lines for
+the whole catalog**. Aim under 150; past that, some of `AGENTS.md` usually got
+duplicated — cut it and link instead. Check the catalog headroom before adding
+a new skill (`cat .claude/skills/*/SKILL.md | wc -l`): if there isn't room,
+edit an existing skill instead of adding one.
 
 ## Done when (for create-skill itself)
 
 - [ ] New skill exists at `.claude/skills/<name>/SKILL.md` with valid frontmatter
+- [ ] Added to the table in `.claude/skills/README.md` with a level
+- [ ] Skill is ≤220 lines and the catalog total is still ≤1,800
+- [ ] `pytest -m unit -k skills_sync` passes
 - [ ] `description` contains explicit "Use when" and "do NOT use" phrases
 - [ ] Body is a numbered/checklist procedure, not paragraphs
 - [ ] Names of the 2–3 real repo files read are stated in the response
