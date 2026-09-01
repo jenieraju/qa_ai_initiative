@@ -28,6 +28,19 @@ Group is depended on by payment links (interval/amount) and member rosters —
 see `APP_CONTEXT.md` → Cross-feature relationships. Delete/edit cascade
 behavior still unconfirmed (no delete-group API yet).
 
+## Confirmed locators
+
+Source: live UI @ web.dev.cofee.life (automated suite green)
+See `src/page_objects/{groups,group_create}_po.py` for full PO mapping.
+
+| UI element | Strategy | PO attribute | Value |
+|------------|----------|--------------|-------|
+| New Group button | role+name | `btn_new_group` | `get_by_button("New Group")` |
+| Group name field | placeholder/label | `input_group_name` | confirmed in `group_create_po.py` |
+| Save and next | role+name | `btn_save_and_next` | confirmed in `group_create_po.py` |
+
+Routes confirmed: `/groups`, `/groups/create`
+
 ## Notes
 
 - Session reuse: cookies from `.auth/{profile}.json` via

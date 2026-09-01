@@ -11,7 +11,8 @@ description: >-
 
 # Generate Test Cases
 
-Produces **test case documents** first — automation comes later via `map-test-cases-to-automation`.
+Produces **test case documents** first — automation comes later via
+`map-test-cases-to-automation`.
 
 ## Inputs
 
@@ -104,7 +105,7 @@ Generate cases across these categories:
 | Type | Happy path |
 | Precondition | Valid test mobile whitelisted in env |
 | Steps | 1. Open /login 2. Enter mobile 3. Accept T&C 4. Submit 5. Enter OTP 6. Submit |
-| Expected result | Redirect to dashboard; user menu visible |
+| Expected result | Left /login; landing URL varies by role — attach actual URL |
 | Automatable | Yes |
 | Markers | e2e, p0, login |
 ```

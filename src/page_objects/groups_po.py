@@ -13,6 +13,7 @@ class GroupsPage(BasePage):
 
         # --- Locators ---
         self.btn_new_group = self.get_by_button("New Group")
+        self.loc_group_cards = self.get_by_data_test_id("groups_groupCard")
 
     def loc_group_by_name(self, group_name: str) -> Locator:
         return self.get_by_text(group_name, exact=True)

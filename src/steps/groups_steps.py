@@ -24,3 +24,10 @@ def user_clicks_new_group(page: Page) -> None:
 @allure.step("User verifies group '{group_name}' is listed")
 def user_verifies_group_is_listed(page: Page, group_name: str) -> None:
     GroupsPageActions(page).verify_group_listed(group_name)
+
+
+@allure.step("User counts groups on the groups list")
+def user_counts_groups_on_list(page: Page) -> int:
+    GroupsPageActions(page).navigate_to_groups_page()
+    GroupsPageActions(page).verify_groups_page_visible()
+    return GroupsPageActions(page).count_listed_groups()

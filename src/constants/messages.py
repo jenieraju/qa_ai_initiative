@@ -39,6 +39,18 @@ BTN_SAVE_AND_NEXT = "Save and next"
 BTN_NEW_GROUP = "New Group"
 MSG_GROUP_CREATED = "Group created successfully"
 
+# Quick Collect (features/quick-collect/pages/create-link — web.dev.cofee.life)
+TITLE_QUICK_COLLECT = "Quick Collect"
+HEADING_ADD_PAYERS = "Add Payers"
+PLACEHOLDER_QC_AMOUNT = "Enter Amount"
+PLACEHOLDER_QC_NOTES = "Eg: Admission fee for Batch 7"
+PLACEHOLDER_QC_SEARCH_MEMBER = "Search by name"
+TAB_QC_ADD_FROM_MEMBERS = "Add from members list"
+BTN_QC_SEND = "Send"
+BTN_QC_CLEAR = "Clear"
+BTN_QC_CONFIRM = "Confirm"
+MSG_QC_SUCCESS_SENT = "Payment link sent successfully!"
+
 # Members — TODO: all values below are placeholders, not confirmed against
 # the live app or its source. Confirm with the app team / discover-locators-
 # from-ui before removing @pytest.mark.ignore from test_member_create.py.

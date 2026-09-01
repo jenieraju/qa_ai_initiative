@@ -84,6 +84,12 @@ def pytest_addoption(parser) -> None:
         help="Record video: true|false",
     )
     parser.addoption(
+        "--slow-mo",
+        action="store",
+        default=None,
+        help="Delay between Playwright actions in ms (e.g. 750). Use with --headless false.",
+    )
+    parser.addoption(
         "--open-allure",
         action="store",
         default="true",
@@ -177,6 +183,7 @@ def _read_framework_version() -> tuple[str, str]:
         return "unknown", "0.0.0"
 
 
+
 @pytest.fixture(autouse=True)
 def _reset_session_state() -> None:
     session_state.clear()
@@ -268,6 +275,8 @@ def browser_type_launch_args(browser_type_launch_args):
     settings = get_settings()
     updated = dict(browser_type_launch_args)
     updated["headless"] = settings.headless
+    if settings.slow_mo_ms > 0:
+        updated["slow_mo"] = settings.slow_mo_ms
     return updated
 
 

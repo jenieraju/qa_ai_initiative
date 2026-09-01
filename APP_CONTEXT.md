@@ -132,8 +132,8 @@ Notes:
 
 ## Quick Collect
 
-Automated in this repo (happy path + amount validation).
-Detail: [context_docs/quick-collect.md](context_docs/quick-collect.md).
+P0 automated and green (happy path + amount validation). Live-verified on
+web.dev.cofee.life. Detail: [context_docs/quick-collect.md](context_docs/quick-collect.md).
 
 ```
 Authenticated session → /quick-collect/create-link
@@ -151,6 +151,8 @@ Notes:
   real phone number, and the payment order is created either way.
 - Only the "Add from members list" tab renders on the dev account; "Add
   manually" / "Import file" / "Add from group" are conditional and unconfirmed.
+- Cross-feature: TC-QC-004 verifies `/groups` card count unchanged after
+  Quick Collect link creation.
 - Teardown gap: created payment orders are not cleaned up — a cancel operation
   is documented but its REST path is unconfirmed (see the context doc).
 
@@ -168,6 +170,7 @@ and the required field set are placeholders — the test stays
 `@pytest.mark.ignore` until someone runs `discover-locators-from-ui`
 against the real Members tab and this section gets filled in with
 confirmed facts (route, real flow, fields, any role/permission rules).
+Detail: [context_docs/members.md](context_docs/members.md).
 
 **If/when a member-deletion (or edit) feature lands**, per the
 "Cross-feature relationships" table above, its test cases must explicitly

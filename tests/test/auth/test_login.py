@@ -57,8 +57,7 @@ class TestLogin:
                 settings.login_mobile_number,
                 settings.login_otp,
             )
-            # The landing route varies by account and role — an org Owner lands
-            # on /dashboard, other accounts on /groups — so assert only that the
+            # The landing route varies by account and role — assert only that the
             # login page was left behind, and record where it actually landed.
             assert_url_does_not_contain(page, LOGIN_PATH)
             user_saves_authenticated_session(page, DEFAULT_AUTH_PROFILE)

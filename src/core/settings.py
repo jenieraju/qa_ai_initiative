@@ -114,6 +114,7 @@ class Settings(BaseSettings):
     target_browser: str = Field(default="chromium", alias="TARGET_BROWSER")
     headless: bool = Field(default=True, alias="HEADLESS")
     record_video: bool = Field(default=False, alias="RECORD_VIDEO")
+    slow_mo_ms: int = Field(default=0, alias="SLOW_MO_MS")
 
     @field_validator("headless", "record_video", mode="before")
     @classmethod

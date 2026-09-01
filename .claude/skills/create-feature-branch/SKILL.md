@@ -12,8 +12,9 @@ description: >-
 
 First step of the new-feature pipeline: `create-feature-branch` → `get-context`
 → `generate-test-cases` → `map-test-cases-to-automation` →
-`scaffold-feature-automation`. Everything downstream reuses the slug decided
-here — for the `APP_CONTEXT.md` section heading, the `context_docs/<slug>.md`
+`discover-locators-from-ui` → `scaffold-feature-automation` →
+`run-and-verify-tests`. Everything downstream reuses the slug decided here —
+for the `APP_CONTEXT.md` section heading, the `context_docs/<slug>.md`
 filename (created at get-context, enriched after automation), the branch
 name, and the `pytest.ini` feature marker.
 
@@ -50,7 +51,7 @@ Branch naming follows this repo's existing convention (no ticket-id prefix):
 - [ ] Working tree is on `feature/<slug>`, branched from an up-to-date `main`
 - [ ] Nothing was pushed, nothing uncommitted was discarded
 - [ ] Reported to the user: "Branch `feature/<slug>` ready — next: get-context
-      for `<slug>`."
+      for `<slug>`." Final step of the pipeline is always `run-and-verify-tests`.
 
 ## Self-check
 

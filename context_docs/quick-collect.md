@@ -83,6 +83,20 @@ Authenticated session → /quick-collect/create-link
     `quick_collect_amount`/`quick_collect_note`.
   - "Try demo" mode (`payment-order/demo/send-link`).
 
+## Confirmed locators
+
+Source: live UI @ web.dev.cofee.life (2026-08-31). See `src/page_objects/quick_collect_po.py`.
+
+| UI element | Strategy | PO attribute | Value |
+|------------|----------|--------------|-------|
+| Success message | testid | `msg_success` | `quick_collect_success_text` |
+| Fee amount | placeholder | `input_amount` | `Enter Amount` |
+| Notes | placeholder | `input_notes` | `Eg: Admission fee for Batch 7` |
+| Suppress notifications | role+name | `chk_suppress_notifications` | checkbox label text |
+| Primary CTA | role+name | `btn_submit` | `Send` or `Create` (state-dependent) |
+
+Routes confirmed: `/quick-collect/create-link`, `/quick-collect/success`
+
 ## Cross-feature impact
 
 Creates a **payment link / payment order** — a row in `APP_CONTEXT.md`'s

@@ -12,10 +12,11 @@ files — one copy, no drift. Never add a second copy under `.cursor/`.
 |-------|--------------|-------|
 | **Setup** | Anyone starting a new feature | Branching before work begins |
 | **Discovery** | QA analysts, before test design | APP_CONTEXT.md index + living context_docs/<slug>.md |
-| **Basic** | New contributors, first tests | Scaffolding, locators, layers |
+| **Basic** | New contributors, first tests | Scaffolding, locators, layers, extending flows |
 | **Test design** | QA analysts, before coding | Test cases, coverage, mapping to code |
 | **Implementation** | Automation engineers | Dataproviders, auth, API setup |
-| **Maintenance** | Fixing broken/flaky tests | Debug, refactor, review |
+| **Execution** | Running and reporting | CI, parallel, Allure |
+| **Maintenance** | Fixing broken/flaky tests | Debug, resync, locator fixes, PR review |
 | **Meta** | Adding to this catalog | Writing new skills |
 
 ## Implemented skills
@@ -24,8 +25,10 @@ files — one copy, no drift. Never add a second copy under `.cursor/`.
 |-------|-------|--------|
 | Create feature branch | Setup | `create-feature-branch/` |
 | Get context | Discovery | `get-context/` |
-| Scaffold feature automation | Basic | `scaffold-feature-automation/` |
 | Discover locators from UI | Basic | `discover-locators-from-ui/` |
+| Scaffold feature automation | Basic | `scaffold-feature-automation/` |
+| Extend feature automation | Basic | `extend-feature-automation/` |
+| Run and verify tests | Execution | `run-and-verify-tests/` |
 | Generate test cases | Test design | `generate-test-cases/` |
 | Map test cases to automation | Test design | `map-test-cases-to-automation/` |
 | Create dataprovider | Implementation | `create-dataprovider/` |
@@ -40,30 +43,38 @@ files — one copy, no drift. Never add a second copy under `.cursor/`.
 
 ```
 create-feature-branch → get-context → generate-test-cases (approve) →
-map-test-cases-to-automation → scaffold-feature-automation →
-run against the live app → fix what the run disproves → repeat
+map-test-cases-to-automation → discover-locators-from-ui →
+scaffold-feature-automation → run-and-verify-tests
 ```
 
-The last two arrows are where the real work happens. Locators, copy and flows
-confirmed from source still get disproved by the running app, and a suite that
-goes green first try usually means an assertion that cannot fail.
+**Extend an existing feature** (wizard step 2, edit flow, new cases):
+
+```
+get-context (update same slug) → discover-locators-from-ui (append locators) →
+extend-feature-automation → run-and-verify-tests
+```
+
+**Hard rules:**
+
+- `get-context` is the **only** skill that creates `context_docs/<slug>.md`.
+- `discover-locators-from-ui` must fill `## Confirmed locators` before scaffold/extend.
+- `run-and-verify-tests` must pass before calling automation **done**.
+
+Locators and flows confirmed from source still get disproved by the live app —
+expect to iterate after the first run.
 
 ## Planned (add when needed)
 
 | Skill | Level | When to add |
 |-------|-------|-------------|
-| `resync-feature` | Maintenance | FE churn breaks suites / context_docs drift |
 | `interact-with-common-controls` | Basic | Dropdown/modal/wizard pain |
 | `handle-new-tab-window` | Implementation | Payment/OAuth flows |
 | `parallel-group-design` | Execution | Parallel race failures |
 | `generate-allure-report` | Execution | CI report triage |
 | `convert-ac-to-automation` | Test design | Openspec/Jira AC heavy teams |
 
-Dropped from this list as already covered: `fix-broken-locator`
-(`discover-locators-from-ui` does it) and `refactor-test-layers`
-(`tests/test/core/test_layer_boundaries.py` now detects violations
-mechanically). Keep this list short — a long "planned" list reads as
-capability that exists.
+Dropped from this list as already covered: `refactor-test-layers`
+(`tests/test/core/test_layer_boundaries.py` detects violations mechanically).
 
 ## Usage
 
@@ -84,9 +95,5 @@ every framework symbol these files name honest.
 ## Budget
 
 Two limits, both enforced by `test_skills_sync.py`: **220 lines per skill** and
-**1,800 lines for the whole catalog** (check headroom with
-`cat .claude/skills/*/SKILL.md | wc -l`). The per-skill cap alone doesn't stop the
-catalog growing past what anyone reads — every one of these files competes for
-the same attention. Adding to a skill that is near its cap means cutting
-something else in it, and adding a skill means the catalog total has to still
-fit. Prefer editing an existing skill over adding a new one.
+**1,800 lines for the whole catalog**. Prefer editing an existing skill over
+adding a new one when near the cap.

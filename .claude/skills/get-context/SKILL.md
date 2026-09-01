@@ -9,6 +9,11 @@ description: >-
 
 # Get Context
 
+**Single owner** for creating and updating `APP_CONTEXT.md` index entries and
+`context_docs/<slug>.md`. Other skills (`generate-test-cases`,
+`scaffold-feature-automation`, `extend-feature-automation`) **read** these files
+— they do not recreate context inline.
+
 Second step of the new-feature pipeline (after `create-feature-branch`, before
 `generate-test-cases`). No Figma or Jira MCP is configured — those artifacts
 arrive as pasted text, a link, or an uploaded screenshot. A browser MCP
@@ -66,10 +71,12 @@ Aliases: `login` / `onboarding` → `authentication-onboarding`.
 
 ## 4. Enrich after automation
 
-When four layers exist (see `scaffold-feature-automation`), same turn:
-- Set `Status:` to `partially-automated` or `automated`
-- Fill **Coverage** (PO/test paths) and confirmed locator/session/teardown notes
+When four layers exist and `run-and-verify-tests` passes (see that skill):
+- Set `Status:` to `partially-automated` or `automated` in the context doc
+- Fill **Coverage** (PO/test paths) and confirmed session/teardown notes
 - Keep `APP_CONTEXT.md` high-level; detail stays in the context doc only
+
+Do not set `Status: automated` from scaffold alone — only after a green verify run.
 
 ## Template — context_docs/<slug>.md
 
@@ -93,6 +100,11 @@ Status: discovery | partially-automated | automated
 ## Cross-feature impact
 {Entities touched + cascade/block/orphan unknowns, or "none"}
 
+## Confirmed locators
+
+{Empty at discovery — fill via discover-locators-from-ui before scaffold.
+Table format: | UI element | Strategy | PO attribute | Value |}
+
 ## Notes
 - {Confirmed quirks}
 - {Unconfirmed — "[Assumption]" / "[Unknown — needs confirmation]"}
@@ -108,6 +120,7 @@ Status: discovery | partially-automated | automated
 - [ ] After automation: same context doc enriched; Status updated
 - [ ] Cross-feature table/section updated if needed
 - [ ] Every unconfirmed fact labeled
+- [ ] New context doc includes empty `## Confirmed locators` placeholder
 - [ ] Reported: "Context: `APP_CONTEXT.md` → '<Feature>' +
       `context_docs/<slug>.md` (Status: …). Next: generate-test-cases."
 
@@ -118,8 +131,4 @@ wizard step", "here's the PRD for payment-link, get context".
 Does not trigger: "write test cases for login" (`generate-test-cases`),
 "why is this test flaky" (`debug-flaky-e2e-test`).
 
-## Later (when FE churn hurts)
-
-Add a `resync-feature` skill that diffs product changes against
-`context_docs/<slug>.md` and patches only drifted sections — do not build
-it until suites start breaking from undocumented UI/API drift.
+For UI/locator drift after releases, see `resync-feature` or `fix-broken-locator`.

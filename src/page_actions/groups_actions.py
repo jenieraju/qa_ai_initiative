@@ -41,3 +41,6 @@ class GroupsPageActions(PageActions):
             return True
         except AssertionError:
             return False
+
+    def count_listed_groups(self) -> int:
+        return self.po.loc_group_cards.count()

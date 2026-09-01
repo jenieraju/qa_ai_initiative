@@ -33,6 +33,21 @@ Login and first-time onboarding for cofee-web. High-level sketch:
 
 Creates org/user with no delete API — no teardown possible today.
 
+## Confirmed locators
+
+Source: live UI @ web.dev.cofee.life (automated suite green)
+See `src/page_objects/{login,onboarding,document_upload,payment_selection}_po.py`.
+
+| UI element | Strategy | PO attribute | Value |
+|------------|----------|--------------|-------|
+| Auth section title | testid | `lbl_section_title` | `authentication_title` |
+| Mobile number | placeholder | `input_mobile_number` | `Enter your mobile number` |
+| Agree terms | testid | `chk_agree_terms` | `login_agreeTerms` |
+| Continue | role+name | `btn_continue` | `Continue` |
+| OTP inputs | testid | `input_otp_boxes` | `otpVerify_otpInputs` |
+
+Routes confirmed: `/login`, `/select-account`, `/document-upload`, `/select-payment`, `/groups`
+
 ## Notes
 
 - **App drift, found 2026-08-31: individual onboarding gained a

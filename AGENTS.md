@@ -30,15 +30,35 @@ raw locator outside a page object, a layer skipped, or a `sleep`.
 ## Always-on rules
 
 - New feature from a PRD? `get-context`: short section in `APP_CONTEXT.md` + create/update `context_docs/<slug>.md` (see that file's "Writing new tests"). Extending a flow? Follow `Detail:` into the same context doc. After automation, enrich that doc (`Status:`). If a test ships `@pytest.mark.ignore`d, also add it to `README.md` → "Next steps".
+- **Never invent locators.** Run `discover-locators-from-ui` against the live app or frontend source; record results in `context_docs/<slug>.md` → `## Confirmed locators` before `scaffold-feature-automation`. Placeholder POs without that step must stay `@pytest.mark.ignore`.
 - Use `get_settings()` for config — never hardcode URLs, secrets, or credentials.
 - Parametrize from `tests/dataprovider/dp_*.py`.
-- On create of persistent data, register cleanup with `teardown_registry` (see `test-data-teardown` skill).
+- On create of persistent data, register cleanup with `teardown_registry` (see **Teardown** below and `test-data-teardown` skill).
+- **Done means green.** After scaffold or fixes, run `run-and-verify-tests` — do not mark `Status: automated` until non-ignored tests pass.
 - Prefer explicit waits over `sleep`. No bare `except`.
 - Never assert a specific post-login landing route — it varies by account and role. Assert that `/login` was left behind.
 - Before asserting an "error" appears, check it isn't always-visible helper text (see `discover-locators-from-ui` → "Trap").
 - API setup/cleanup goes through `src/core/api_client.py` — never a raw `httpx` call.
 - Keep code simple; no duplicate logic or extra abstractions.
 - Do not restate discoverable facts (stack, folder layout, pytest flags) — read the codebase.
+
+## Teardown
+
+Register cleanup with `teardown_registry` when a test **creates** persistent
+data and a delete API exists. `tests/conftest.py` runs registered cleanups
+after every test (pass or fail). Exception: irreversible flows with no delete
+API (onboarding org/user) — document in `APP_CONTEXT.md`; no registry call.
+Details: `test-data-teardown` skill.
+
+## New-feature pipeline
+
+See [.cursor/skills/README.md](.cursor/skills/README.md). New feature:
+`get-context` → `generate-test-cases` → `map-test-cases-to-automation` →
+`discover-locators-from-ui` → `scaffold-feature-automation` →
+`run-and-verify-tests`. Extend existing: swap scaffold for
+`extend-feature-automation`. Maintenance: `discover-locators-from-ui` (single locator), `debug-flaky-e2e-test` (multi-test drift).
+
+Unit tests in `tests/test/core/` enforce context sync and layer imports.
 
 ## Commands
 

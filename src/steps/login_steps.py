@@ -56,6 +56,7 @@ def user_saves_authenticated_session(page: Page, profile_name: str = DEFAULT_AUT
     )
 
 
+
 @allure.step("User ensures they are logged in (reuse session or login)")
 def user_ensures_logged_in(page: Page, profile_name: str = DEFAULT_AUTH_PROFILE) -> None:
     """Reuse cookies from auth_profile when present; otherwise UI-login and save state.
@@ -80,9 +81,8 @@ def user_ensures_logged_in(page: Page, profile_name: str = DEFAULT_AUTH_PROFILE)
     if LOGIN_PATH not in page.url:
         user_navigates_to_login_page(page)
     user_logs_in_with_mobile_and_otp(page, settings.login_mobile_number, settings.login_otp)
-    # The landing route varies by account and role (/dashboard for an org Owner,
-    # /groups for others), so "left the login page" is the only reliable
-    # post-login signal. The groups probe below confirms the session itself.
+    # The landing route varies by account and role — "left the login page" is
+    # the only reliable post-login signal. The groups probe below confirms the session.
     assert_url_does_not_contain(page, LOGIN_PATH, timeout=settings.default_timeout_ms)
     user_saves_authenticated_session(page, profile_name)
     groups.navigate_to_groups_page()
