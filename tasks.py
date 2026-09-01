@@ -76,6 +76,34 @@ def precommit(c):
 
 
 @task(
+    name="scaffold-feature",
+    help={
+        "slug": "Feature slug, e.g. checkout (lowercase snake_case)",
+        "route": "Route path, e.g. /checkout",
+        "priority": "p0|p1|p2 (default p2)",
+        "marker": "Feature marker name, defaults to slug",
+        "area": "tests/test/<area>/ subdirectory, defaults to slug",
+    },
+)
+def scaffold_feature(c, slug, route, priority="p2", marker=None, area=None):
+    """Scaffold PO/actions/steps/dataprovider/test skeleton for a new feature.
+
+    Backs the scaffold-feature-automation skill. Requires confirmed locators
+    from discover-locators-from-ui — this only stamps out TODO placeholders,
+    and refuses to overwrite files that already exist.
+    """
+    from src.core.scaffold_generator import scaffold_feature as run_scaffold
+
+    result = run_scaffold(slug=slug, route=route, priority=priority, marker=marker, area=area)
+    for path in result["created"]:
+        print(f"created  {path.relative_to(Path.cwd())}")
+    for path in result["skipped"]:
+        print(f"skipped  {path.relative_to(Path.cwd())} (already exists)")
+    print("\nNext: fill in locators (discover-locators-from-ui), then:")
+    print(f"  invoke lint && pytest --collect-only --env dev -m {marker or slug}")
+
+
+@task(
     help={
         "env": "Target environment (dev|stg|uat|prod)",
         "markers": "Pytest marker expression",

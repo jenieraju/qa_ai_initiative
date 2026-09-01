@@ -31,6 +31,11 @@ Feature name, route path(s), confirmed locators (from
 
 ## Checklist
 
+`invoke scaffold-feature --slug {feature} --route /{feature} --priority p1`
+(`src/core/scaffold_generator.py`) stamps out all five files below
+mechanically — TODO locator placeholders, `pytest.ini` marker included, never
+overwrites an existing file. Prefer it over hand-typing the templates.
+
 ```
 - [ ] src/page_objects/{feature}_po.py
 - [ ] src/page_actions/{feature}_actions.py

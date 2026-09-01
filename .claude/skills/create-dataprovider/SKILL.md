@@ -18,6 +18,9 @@ Rules from [AGENTS.md](../../../AGENTS.md):
 - **No secrets** — credentials from `get_settings()` at runtime
 - **No time-relative values** at collection time
 
+`tests/test/core/test_dataprovider_no_secrets.py` (`-m unit`) fails the build on the clearest
+email/phone/password-shaped literals — a smoke test, not a substitute for the pattern below.
+
 ## Template
 
 ```python
