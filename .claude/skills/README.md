@@ -26,6 +26,7 @@ files — one copy, no drift. Never add a second copy under `.cursor/`.
 | Create feature branch | Setup | `create-feature-branch/` |
 | Get context | Discovery | `get-context/` |
 | Discover locators from UI | Basic | `discover-locators-from-ui/` |
+| Write page object | Basic | `write-page-object/` |
 | Scaffold feature automation | Basic | `scaffold-feature-automation/` |
 | Extend feature automation | Basic | `extend-feature-automation/` |
 | Run and verify tests | Execution | `run-and-verify-tests/` |
@@ -35,7 +36,9 @@ files — one copy, no drift. Never add a second copy under `.cursor/`.
 | Auth storage state setup | Implementation | `auth-storage-state-setup/` |
 | API test setup/teardown | Implementation | `api-test-setup-teardown/` |
 | Test data teardown | Implementation | `test-data-teardown/` |
+| Diagnose test failure | Maintenance | `diagnose-test-failure/` |
 | Debug flaky E2E test | Maintenance | `debug-flaky-e2e-test/` |
+| Refactor shared values | Maintenance | `refactor-shared-values/` |
 | Review automation PR | Maintenance | `review-automation-pr/` |
 | Create skill | Meta | `create-skill/` |
 
@@ -44,7 +47,7 @@ files — one copy, no drift. Never add a second copy under `.cursor/`.
 ```
 create-feature-branch → get-context → generate-test-cases (approve) →
 map-test-cases-to-automation → discover-locators-from-ui →
-scaffold-feature-automation → run-and-verify-tests
+write-page-object → scaffold-feature-automation → run-and-verify-tests
 ```
 
 **Extend an existing feature** (wizard step 2, edit flow, new cases):
@@ -54,11 +57,20 @@ get-context (update same slug) → discover-locators-from-ui (append locators) �
 extend-feature-automation → run-and-verify-tests
 ```
 
+**A test is red** (broke after a release, or never passed):
+
+```
+diagnose-test-failure → discover-locators-from-ui / debug-flaky-e2e-test /
+refactor-shared-values → run-and-verify-tests
+```
+
 **Hard rules:**
 
 - `get-context` is the **only** skill that creates `context_docs/<slug>.md`.
 - `discover-locators-from-ui` must fill `## Confirmed locators` before scaffold/extend.
 - `run-and-verify-tests` must pass before calling automation **done**.
+- `diagnose-test-failure` owns every red test. `debug-flaky-e2e-test` is for
+  *intermittent* failures only — never route a consistently-failing test there.
 
 Locators and flows confirmed from source still get disproved by the live app —
 expect to iterate after the first run.
@@ -74,7 +86,16 @@ expect to iterate after the first run.
 | `convert-ac-to-automation` | Test design | Openspec/Jira AC heavy teams |
 
 Dropped from this list as already covered: `refactor-test-layers`
-(`tests/test/core/test_layer_boundaries.py` detects violations mechanically).
+(`tests/test/core/test_layer_boundaries.py` detects violations mechanically);
+`resync-feature` and `fix-broken-locator` (both are `diagnose-test-failure`
+routing to `discover-locators-from-ui`).
+
+## Browser MCPs
+
+`.mcp.json` configures `playwright` (a11y snapshots for locators, authenticated
+from `.auth/default.json`) and `chrome-devtools` (network capture for confirming
+real API calls). Committed rather than left to each IDE so everyone gets the
+same tools — same reasoning as the `.cursor/skills` symlink.
 
 ## Usage
 
@@ -95,5 +116,6 @@ every framework symbol these files name honest.
 ## Budget
 
 Two limits, both enforced by `test_skills_sync.py`: **220 lines per skill** and
-**1,800 lines for the whole catalog**. Prefer editing an existing skill over
-adding a new one when near the cap.
+**2,400 lines for the whole catalog**. Prefer editing an existing skill over
+adding a new one when near the cap. `test_referenced_skills_exist` additionally
+fails the build on a skill pointing at a sibling that was never written.

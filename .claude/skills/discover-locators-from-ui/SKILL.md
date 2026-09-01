@@ -34,11 +34,27 @@ skill deliberately does not restate them.
 
 ## Workflow
 
-### Option A — Live app (Playwright codegen or manual inspect)
+### Option A — Live app via browser MCP (preferred)
 
-1. Open target page in browser DevTools
-2. For each interactive element, note: tag, role, label, test id, visible text
-3. Prefer stable attributes over positional selectors (no `nth(3)` unless unavoidable)
+`.mcp.json` configures two servers. Session auth comes from `.auth/default.json`,
+so navigate straight to the target route — no OTP loop. If the snapshot lands on
+`/login`, the profile expired: refresh it with `auth-storage-state-setup`.
+
+1. `browser_navigate` to the route (import it from `src/constants/routes.py`)
+2. `browser_snapshot` — the accessibility tree gives role, accessible name,
+   placeholder and test id per element, which is exactly the input the helper
+   table above needs. Prefer this over `take_screenshot`: it is text, so it
+   costs less and is greppable.
+3. For each interactive element, note: tag, role, label, test id, visible text
+4. Prefer stable attributes over positional selectors (no `nth(3)` unless unavoidable)
+5. Probe state before trusting a feedback locator — fill an invalid value, then
+   a valid one, and compare (see the trap below). This is the step the bundle
+   cannot do for you.
+
+Use `chrome-devtools` MCP when the screen renders but the data looks wrong:
+`list_network_requests` / `get_network_request` show the real call, method and
+payload. This is also how to confirm API paths for `api-test-setup-teardown`
+rather than grepping `` `v1/...` `` literals out of the bundle.
 
 ### Option B — Frontend source
 
@@ -48,7 +64,7 @@ skill deliberately does not restate them.
 
 ### Option C — The deployed JS bundle (when you have neither)
 
-No app repo checked out, and no browser MCP connected? The **deployed bundle is source**.
+No app repo checked out, and the browser MCPs unavailable? The **deployed bundle is source**.
 This is how Quick Collect was mapped with no PRD, no Figma and no app repo.
 
 `BASE_URL` is the app host for the target env (`get_settings().base_url` /

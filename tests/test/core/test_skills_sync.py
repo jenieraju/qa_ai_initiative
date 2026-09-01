@@ -28,7 +28,11 @@ SKILLS_DIR = REPO_ROOT / ".claude" / "skills"
 MAX_SKILL_LINES = 220
 
 # The per-skill cap alone lets the catalog grow without limit; this bounds the sum.
-MAX_CATALOG_LINES = 1_800
+# Raised from 1,800 when write-page-object, diagnose-test-failure and
+# refactor-shared-values were added: the old ceiling was reached, and it had
+# started forcing skills to be thin rather than short — extend-feature-automation
+# (17 lines) and run-and-verify-tests (21) were both starved by it.
+MAX_CATALOG_LINES = 2_400
 
 # Names skills use in illustrative snippets that are deliberately *not* real
 # framework helpers — the reader is meant to substitute their own. Keep this
@@ -41,6 +45,22 @@ ILLUSTRATIVE_NAMES = {
 
 # Legitimate instance attributes on framework base classes, not callables.
 FRAMEWORK_ATTRIBUTES = {"po", "page", "settings"}
+
+# Backticked kebab-case tokens that are deliberately not skill names, so
+# test_referenced_skills_exist doesn't flag them. Everything else matching
+# `a-b` in a SKILL.md is treated as a sibling-skill reference.
+NON_SKILL_KEBAB_TOKENS = {
+    "aria-label",
+    "authentication-onboarding",  # context_docs slug
+    "chrome-devtools",  # MCP server name, see .mcp.json
+    "code-review",  # generic review pass, not a repo skill
+    "custom-user-role",  # example feature slug
+    "data-testid",
+    "framework-unit-tests",
+    "login-submit",  # example testid value
+    "partially-automated",  # context-doc Status value
+    "text-grey60",  # CSS class in the static-hint example
+}
 
 # Locators are per-feature page-object attributes, never framework symbols, so a
 # skill's example locator must not be mistaken for a missing helper. Prefixes are
@@ -330,3 +350,42 @@ class TestSkillsSync:
             f"trim or merge rather than raising this. Largest: "
             f"{sorted(per_skill.items(), key=lambda kv: -kv[1])[:3]}"
         )
+
+    def test_referenced_skills_exist(self):
+        """A skill pointing at a non-existent sibling routes the agent nowhere.
+
+        get-context shipped `resync-feature` and `fix-broken-locator` for months;
+        neither was ever written, and nothing caught it because the other checks
+        here validate frontmatter, README rows and src/ symbols — not sibling
+        skill names.
+        """
+        on_disk = {s.parent.name for s in _skill_files()}
+        dangling = []
+        for skill in _skill_files():
+            text = skill.read_text(encoding="utf-8")
+            for token in set(re.findall(r"`([a-z][a-z0-9]*(?:-[a-z0-9]+)+)`", text)):
+                if token in on_disk or token in NON_SKILL_KEBAB_TOKENS:
+                    continue
+                dangling.append(f"{skill.parent.name}: `{token}`")
+
+        assert not dangling, (
+            "These skills reference a sibling skill that does not exist. Either "
+            "write it, retarget the reference, or — if the token is not a skill "
+            "name — add it to NON_SKILL_KEBAB_TOKENS with a comment:\n  "
+            + "\n  ".join(sorted(dangling))
+        )
+
+    def test_claude_md_points_at_agents_md(self):
+        """CLAUDE.md is what Claude Code auto-loads; AGENTS.md is what Cursor reads.
+
+        A symlink keeps one copy so the always-on rules cannot drift apart —
+        the same trick .cursor/skills uses for this directory.
+        """
+        claude_md = REPO_ROOT / "CLAUDE.md"
+        assert claude_md.is_symlink(), (
+            "CLAUDE.md must be a symlink to AGENTS.md, not a copy — two files of "
+            "always-on rules drift, and only one of them gets updated"
+        )
+        assert (
+            claude_md.resolve() == (REPO_ROOT / "AGENTS.md").resolve()
+        ), f"CLAUDE.md points at {claude_md.resolve()}, expected AGENTS.md"

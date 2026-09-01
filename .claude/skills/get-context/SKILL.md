@@ -16,8 +16,10 @@ description: >-
 
 Second step of the new-feature pipeline (after `create-feature-branch`, before
 `generate-test-cases`). No Figma or Jira MCP is configured — those artifacts
-arrive as pasted text, a link, or an uploaded screenshot. A browser MCP
-(`chrome-devtools`) may be connected; if it is, use it to check the live app. Read
+arrive as pasted text, a link, or an uploaded screenshot. Two browser MCPs
+are configured in `.mcp.json` — use `playwright` (`browser_navigate` +
+`browser_snapshot`) to see the live screen, `chrome-devtools`
+(`list_network_requests`) to capture the API calls a flow really makes. Read
 [AGENTS.md](../../../AGENTS.md) and `APP_CONTEXT.md`'s "Writing new tests" first.
 
 ## Long-run model (two tiers)
@@ -129,6 +131,6 @@ Table format: | UI element | Strategy | PO attribute | Value |}
 Triggers: "get context for custom user role", "automate the next groups
 wizard step", "here's the PRD for payment-link, get context".
 Does not trigger: "write test cases for login" (`generate-test-cases`),
-"why is this test flaky" (`debug-flaky-e2e-test`).
-
-For UI/locator drift after releases, see `resync-feature` or `fix-broken-locator`.
+"why is this test flaky" (`debug-flaky-e2e-test`), "this test broke after the
+release" (`diagnose-test-failure`, which triages then routes to
+`discover-locators-from-ui` for UI/locator drift).

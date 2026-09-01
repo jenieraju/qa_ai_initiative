@@ -21,6 +21,7 @@ target/
 .auth/
 playwright-report/
 test-results/
+.allure-server.pid
 *.png
 *.webm
 
