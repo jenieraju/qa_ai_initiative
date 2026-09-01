@@ -4,6 +4,7 @@ Always-on conventions for this repo. Keep this file short — it loads every tur
 App under test: [APP_CONTEXT.md](APP_CONTEXT.md) (always-on index) and
 [context_docs/](context_docs/) (living per-feature records from discovery on).
 How-to workflows: [.claude/skills/](.claude/skills/) (progressive disclosure — do not paste skill steps here; `.cursor/skills` is a symlink to it).
+Before doing a repo workflow manually (scaffolding, extending automation, adding a dataprovider, verifying tests, reviewing a PR, etc.), check `.claude/skills/` for a matching skill and invoke it — even if the user didn't name it.
 
 ## Architecture (mandatory every change)
 
